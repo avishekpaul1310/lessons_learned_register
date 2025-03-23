@@ -1,0 +1,295 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Lessons Learned{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12 mb-4">
+        <h2><i class="fas fa-tachometer-alt me-2"></i>Dashboard</h2>
+        <p class="lead">Welcome to your Lessons Learned dashboard.</p>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="col-12 mb-4">
+        <div class="row">
+            <div class="col-md-3 mb-3">
+                <div class="card bg-primary text-white h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-white-50">Total Lessons</h6>
+                                <h2 class="display-4 mb-0">{{ total_lessons }}</h2>
+                            </div>
+                            <i class="fas fa-clipboard-list fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                    <div class="card-footer d-flex align-items-center justify-content-between">
+                        <a href="{% url 'lesson-list' %}" class="text-white-50 text-decoration-none">View all lessons</a>
+                        <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3 mb-3">
+                <div class="card bg-success text-white h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-white-50">Implemented</h6>
+                                <h2 class="display-4 mb-0">{{ lessons_by_status.Implemented|default:"0" }}</h2>
+                            </div>
+                            <i class="fas fa-check-circle fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                    <div class="card-footer d-flex align-items-center justify-content-between">
+                        <a href="{% url 'lesson-list' %}?status=IMPLEMENTED" class="text-white-50 text-decoration-none">View implemented lessons</a>
+                        <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3 mb-3">
+                <div class="card bg-warning text-white h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-white-50">New Lessons</h6>
+                                <h2 class="display-4 mb-0">{{ lessons_by_status.New|default:"0" }}</h2>
+                            </div>
+                            <i class="fas fa-lightbulb fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                    <div class="card-footer d-flex align-items-center justify-content-between">
+                        <a href="{% url 'lesson-list' %}?status=NEW" class="text-white-50 text-decoration-none">View new lessons</a>
+                        <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3 mb-3">
+                <div class="card bg-danger text-white h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-white-50">High Impact</h6>
+                                <h2 class="display-4 mb-0">{{ high_impact_count|default:"0" }}</h2>
+                            </div>
+                            <i class="fas fa-exclamation-triangle fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                    <div class="card-footer d-flex align-items-center justify-content-between">
+                        <a href="{% url 'lesson-list' %}?impact=HIGH" class="text-white-50 text-decoration-none">View high impact lessons</a>
+                        <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Projects & Latest Lessons -->
+    <div class="col-md-7 mb-4">
+        <!-- Latest Lessons -->
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Latest Lessons</h5>
+                <a href="{% url 'lesson-list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body">
+                {% if latest_lessons %}
+                <div class="list-group list-group-flush">
+                    {% for lesson in latest_lessons %}
+                    <a href="{% url 'lesson-detail' lesson.pk %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ lesson.title }}</h6>
+                            <small class="text-muted">{{ lesson.created_date|date:"M d, Y" }}</small>
+                        </div>
+                        <p class="mb-1">{{ lesson.description|striptags|truncatechars:120 }}</p>
+                        <small>
+                            <span class="badge bg-primary">{{ lesson.project.name }}</span>
+                            <span class="badge bg-secondary">{{ lesson.category.name|default:"Uncategorized" }}</span>
+                            <span class="badge bg-{% if lesson.impact == 'HIGH' %}danger{% elif lesson.impact == 'MEDIUM' %}warning{% else %}info{% endif %}">
+                                {{ lesson.get_impact_display }} Impact
+                            </span>
+                        </small>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-clipboard-list fa-3x mb-3 text-muted"></i>
+                    <h5>No lessons found</h5>
+                    <p class="text-muted mb-0">Start capturing lessons from your projects</p>
+                </div>
+                {% endif %}
+            </div>
+            <div class="card-footer text-center">
+                <a href="{% url 'lesson-create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i>Add New Lesson
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-5 mb-4">
+        <!-- Starred Lessons -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-star me-2 text-warning"></i>Starred Lessons</h5>
+            </div>
+            <div class="card-body">
+                {% if starred_lessons %}
+                <div class="list-group list-group-flush">
+                    {% for lesson in starred_lessons %}
+                    <a href="{% url 'lesson-detail' lesson.pk %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ lesson.title }}</h6>
+                            <small>
+                                <span class="badge bg-{% if lesson.impact == 'HIGH' %}danger{% elif lesson.impact == 'MEDIUM' %}warning{% else %}info{% endif %}">
+                                    {{ lesson.get_impact_display }}
+                                </span>
+                            </small>
+                        </div>
+                        <small class="text-muted">{{ lesson.project.name }}</small>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="far fa-star fa-3x mb-3 text-muted"></i>
+                    <h5>No starred lessons</h5>
+                    <p class="text-muted mb-0">Star important lessons to access them quickly</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Your Projects -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-project-diagram me-2"></i>Your Projects</h5>
+                <a href="{% url 'project-list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body">
+                {% if user_projects %}
+                <div class="list-group list-group-flush">
+                    {% for project in user_projects %}
+                    <a href="{% url 'project-detail' project.pk %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ project.name }}</h6>
+                            <span class="badge {% if project.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                                {% if project.is_active %}Active{% else %}Inactive{% endif %}
+                            </span>
+                        </div>
+                        <p class="mb-1">{{ project.description|truncatechars:100 }}</p>
+                        <small class="text-muted">
+                            <i class="fas fa-calendar-alt me-1"></i>{{ project.start_date }}
+                            {% if project.end_date %} - {{ project.end_date }}{% endif %}
+                        </small>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-project-diagram fa-3x mb-3 text-muted"></i>
+                    <h5>No projects found</h5>
+                    <p class="text-muted mb-0">Create your first project to get started</p>
+                </div>
+                {% endif %}
+            </div>
+            <div class="card-footer text-center">
+                <a href="{% url 'project-create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i>Create New Project
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Charts -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Lessons by Category</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="categoryChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-tasks me-2"></i>Lessons by Status</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="statusChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Prepare data for the Category Chart
+    const categoryLabels = JSON.parse('{{ lessons_by_category.keys|escapejs }}');
+    const categoryData = JSON.parse('{{ lessons_by_category.values|escapejs }}');
+    
+    // Prepare data for the Status Chart
+    const statusLabels = JSON.parse('{{ lessons_by_status.keys|escapejs }}');
+    const statusData = JSON.parse('{{ lessons_by_status.values|escapejs }}');
+    
+    // Category Chart
+    const ctxCategory = document.getElementById('categoryChart').getContext('2d');
+    const categoryChart = new Chart(ctxCategory, {
+        type: 'pie',
+        data: {
+            labels: categoryLabels,
+            datasets: [{
+                data: categoryData,
+                backgroundColor: [
+                    '#007bff', '#28a745', '#dc3545', '#ffc107', '#17a2b8',
+                    '#6610f2', '#fd7e14', '#20c997', '#e83e8c', '#6c757d'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                }
+            }
+        }
+    });
+    
+    // Status Chart
+    const ctxStatus = document.getElementById('statusChart').getContext('2d');
+    const statusChart = new Chart(ctxStatus, {
+        type: 'doughnut',
+        data: {
+            labels: statusLabels,
+            datasets: [{
+                data: statusData,
+                backgroundColor: [
+                    '#ffc107', // New
+                    '#17a2b8', // Acknowledged
+                    '#007bff', // In Progress
+                    '#28a745', // Implemented
+                    '#6c757d'  // Archived
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}
