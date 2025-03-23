@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import HttpResponse
+from django.core.paginator import Paginator
 from .models import Lesson, Category, Attachment, Comment
 from .forms import LessonForm, AttachmentForm, CommentForm
 from projects.models import Project
@@ -11,15 +12,18 @@ import csv
 from django.template.loader import render_to_string
 from weasyprint import HTML
 import tempfile
+from django.db.models import Count, Q
 
 @login_required
 def lesson_list(request):
-    # Get all lessons from user's projects
+    # Get all lessons from user's projects with optimized query
     user_projects = request.user.projects.all()
-    lessons = Lesson.objects.filter(project__in=user_projects).select_related('project', 'category', 'submitted_by')
+    lessons = Lesson.objects.filter(project__in=user_projects).select_related(
+        'project', 'category', 'submitted_by'
+    )
     
     # Apply filters
-    lesson_filter = LessonFilter(request.GET, queryset=lessons)
+    lesson_filter = LessonFilter(request.GET, queryset=lessons, request=request)
     
     # Handle export
     if 'export' in request.GET:
@@ -31,15 +35,24 @@ def lesson_list(request):
         elif export_format == 'pdf':
             return export_lessons_pdf(filtered_lessons)
     
+    # Pagination
+    paginator = Paginator(lesson_filter.qs, 12)  # Show 12 lessons per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
     context = {
         'filter': lesson_filter,
+        'page_obj': page_obj,
     }
     
     return render(request, 'lessons/lesson_list.html', context)
 
 @login_required
 def lesson_detail(request, pk):
-    lesson = get_object_or_404(Lesson, pk=pk)
+    lesson = get_object_or_404(
+        Lesson.objects.select_related('project', 'category', 'submitted_by'), 
+        pk=pk
+    )
     
     # Check if user has access to this lesson's project
     if request.user not in lesson.project.team_members.all():
@@ -71,10 +84,13 @@ def lesson_detail(request, pk):
     
     context = {
         'lesson': lesson,
-        'comments': lesson.comments.all().order_by('-created_date'),
+        'comments': lesson.comments.select_related('author').order_by('-created_date'),
         'comment_form': comment_form,
         'is_starred': lesson.starred_by.filter(id=request.user.id).exists(),
-        'attachments': lesson.attachments.all(),
+        'attachments': lesson.attachments.select_related('uploaded_by'),
+        'related_lessons': Lesson.objects.filter(
+            project=lesson.project
+        ).exclude(pk=lesson.pk).order_by('-created_date')[:3],
     }
     
     return render(request, 'lessons/lesson_detail.html', context)
@@ -104,7 +120,12 @@ def lesson_create(request):
             messages.success(request, "Lesson has been created successfully!")
             return redirect('lesson-detail', pk=lesson.pk)
     else:
-        form = LessonForm(user=request.user)
+        # Pre-fill project if provided in GET parameters
+        initial_data = {}
+        if 'project' in request.GET:
+            initial_data['project'] = request.GET.get('project')
+            
+        form = LessonForm(user=request.user, initial=initial_data)
         attachment_form = AttachmentForm()
     
     context = {
@@ -155,6 +176,46 @@ def lesson_update(request, pk):
     
     return render(request, 'lessons/lesson_form.html', context)
 
+@login_required
+def delete_attachment(request, pk):
+    attachment = get_object_or_404(Attachment, pk=pk)
+    lesson_pk = attachment.lesson.pk
+    
+    # Check if user has permission to delete
+    if attachment.uploaded_by != request.user and not request.user.is_staff:
+        messages.error(request, "You don't have permission to delete this attachment.")
+        return redirect('lesson-detail', pk=lesson_pk)
+    
+    if request.method == 'POST':
+        attachment.delete()
+        messages.success(request, "Attachment has been deleted.")
+        return redirect('lesson-detail', pk=lesson_pk)
+    
+    return render(request, 'lessons/confirm_delete.html', {
+        'object': attachment,
+        'cancel_url': f'/lessons/{lesson_pk}/'
+    })
+
+@login_required
+def delete_lesson(request, pk):
+    lesson = get_object_or_404(Lesson, pk=pk)
+    
+    # Check if user has permission to delete
+    if lesson.submitted_by != request.user and not request.user.is_staff:
+        messages.error(request, "You don't have permission to delete this lesson.")
+        return redirect('lesson-detail', pk=pk)
+    
+    if request.method == 'POST':
+        project = lesson.project  # Store project before deletion for redirect
+        lesson.delete()
+        messages.success(request, "Lesson has been deleted.")
+        return redirect('project-detail', pk=project.pk)
+    
+    return render(request, 'lessons/confirm_delete.html', {
+        'object': lesson,
+        'cancel_url': f'/lessons/{pk}/'
+    })
+
 def export_lessons_csv(queryset):
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="lessons_learned.csv"'
@@ -192,28 +253,38 @@ def export_lessons_pdf(queryset):
 def dashboard(request):
     user_projects = request.user.projects.all()
     
-    # Get latest lessons
-    latest_lessons = Lesson.objects.filter(project__in=user_projects).order_by('-created_date')[:5]
+    # Get latest lessons with optimized query
+    latest_lessons = Lesson.objects.filter(project__in=user_projects).select_related(
+        'project', 'category', 'submitted_by'
+    ).order_by('-created_date')[:5]
     
-    # Get starred lessons
-    starred_lessons = request.user.starred_lessons.all()
+    # Get starred lessons with optimized query
+    starred_lessons = request.user.starred_lessons.select_related(
+        'project', 'category', 'submitted_by'
+    ).all()
     
     # Get lessons by category
     categories = Category.objects.filter(lesson__project__in=user_projects).distinct()
     lessons_by_category = {}
-    for category in categories:
-        lessons_by_category[category.name] = Lesson.objects.filter(
-            category=category, 
-            project__in=user_projects
-        ).count()
     
-    # Get lessons by status
+    category_counts = Lesson.objects.filter(
+        project__in=user_projects
+    ).values('category__name').annotate(count=Count('category')).order_by('-count')
+    
+    for item in category_counts:
+        category_name = item['category__name'] or 'Uncategorized'
+        lessons_by_category[category_name] = item['count']
+    
+    # Get lessons by status - more efficient query
+    status_counts = Lesson.objects.filter(
+        project__in=user_projects
+    ).values('status').annotate(count=Count('status')).order_by('status')
+    
     lessons_by_status = {}
-    for status, _ in Lesson.STATUS_CHOICES:
-        lessons_by_status[status] = Lesson.objects.filter(
-            status=status, 
-            project__in=user_projects
-        ).count()
+    for item in status_counts:
+        status_code = item['status']
+        status_display = dict(Lesson.STATUS_CHOICES).get(status_code, status_code)
+        lessons_by_status[status_display] = item['count']
     
     context = {
         'latest_lessons': latest_lessons,
