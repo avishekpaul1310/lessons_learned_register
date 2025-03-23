@@ -21,6 +21,7 @@ from django.conf.urls.static import static
 from django.contrib.auth import views as auth_views
 from accounts import views as account_views
 from lessons.views import dashboard
+from lessons.debug_views import debug_view
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -50,6 +51,7 @@ urlpatterns = [
     
     # Summernote
     path('summernote/', include('django_summernote.urls')),
+    path('debug/', debug_view, name='debug'),
 ]
 
 # Serve media files in development
