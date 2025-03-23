@@ -31,8 +31,8 @@ def project_detail(request, pk):
     # Get project statistics
     lesson_stats = {
         'total': project.lessons.count(),
-        'by_category': project.lessons.values('category__name').annotate(count=Count('category')),
-        'by_status': project.lessons.values('status').annotate(count=Count('status')),
+        'implemented': project.lessons.filter(status='IMPLEMENTED').count(),
+        'high_impact': project.lessons.filter(impact='HIGH').count(),
     }
     
     context = {
