@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Profile - Lessons Learned{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Profile Picture</h5>
+            </div>
+            <div class="card-body text-center">
+                <img src="{{ user.profile.image.url }}" alt="{{ user.username }}" class="rounded-circle profile-img mb-3">
+                <h5>{{ user.username }}</h5>
+                <p class="text-muted">{{ user.profile.job_title }}</p>
+                <p class="text-muted">{{ user.profile.department }}</p>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Activity Summary</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Projects
+                        <span class="badge bg-primary rounded-pill">{{ user.projects.count }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Lessons Submitted
+                        <span class="badge bg-primary rounded-pill">{{ user.submitted_lessons.count }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Starred Lessons
+                        <span class="badge bg-primary rounded-pill">{{ user.starred_lessons.count }}</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Update Profile Information</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-12">
+                            <h6 class="mb-3">Account Information</h6>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ u_form.username|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ u_form.email|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ u_form.first_name|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ u_form.last_name|as_crispy_field }}
+                        </div>
+                        
+                        <div class="col-12">
+                            <hr class="my-3">
+                            <h6 class="mb-3">Profile Information</h6>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ p_form.job_title|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ p_form.department|as_crispy_field }}
+                        </div>
+                        <div class="col-12 mb-3">
+                            {{ p_form.image|as_crispy_field }}
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">Update Profile</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
