@@ -15,208 +15,179 @@
 </div>
 
 <div class="card mb-4">
-    <div class="card-header d-flex justify-content-between align-
-
-### Lesson Detail Template (`templates/lessons/lesson_detail.html`)
-```html
-{% extends 'base.html' %}
-{% load crispy_forms_tags %}
-
-{% block title %}{{ lesson.title }} - Lessons Learned{% endblock %}
-
-{% block content %}
-<div class="mb-4">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'lesson-list' %}">Lessons</a></li>
-            <li class="breadcrumb-item active">{{ lesson.title }}</li>
-        </ol>
-    </nav>
-</div>
-
-<div class="row">
-    <div class="col-md-8">
-        <!-- Lesson Details -->
-        <div class="card mb-4">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Lesson Details</h5>
-                <div>
-                    {% if lesson.submitted_by == user or user.is_staff %}
-                    <a href="{% url 'lesson-update' lesson.pk %}" class="btn btn-sm btn-outline-primary">
-                        <i class="fas fa-edit"></i> Edit
-                    </a>
-                    {% endif %}
-                    <a href="{% url 'lesson-detail' lesson.pk %}?star=1" class="btn btn-sm btn-outline-{% if is_starred %}warning{% else %}secondary{% endif %}">
-                        <i class="fas fa-star"></i> {% if is_starred %}Starred{% else %}Star{% endif %}
-                    </a>
-                </div>
-            </div>
-            <div class="card-body">
-                <h3 class="mb-3">{{ lesson.title }}</h3>
-
-                <div class="mb-3">
-                    <span class="badge bg-secondary">Project: {{ lesson.project.name }}</span>
-                    <span class="badge bg-primary">Category: {{ lesson.category.name|default:"Uncategorized" }}</span>
-                    <span class="badge bg-{% if lesson.impact == 'HIGH' %}danger{% elif lesson.impact == 'MEDIUM' %}warning{% else %}info{% endif %}">
-                        Impact: {{ lesson.get_impact_display }}
-                    </span>
-                    <span class="badge bg-{% if lesson.status == 'NEW' %}warning{% elif lesson.status == 'IMPLEMENTED' %}success{% else %}info{% endif %}">
-                        Status: {{ lesson.get_status_display }}
-                    </span>
-                </div>
-
-                <h5>Description</h5>
-                <div class="mb-4">
-                    {{ lesson.description|linebreaks }}
-                </div>
-
-                <h5>Recommendations</h5>
-                <div class="mb-4">
-                    {{ lesson.recommendations|linebreaks }}
-                </div>
-
-                {% if lesson.implementation_notes %}
-                <h5>Implementation Notes</h5>
-                <div class="mb-4">
-                    {{ lesson.implementation_notes|linebreaks }}
-                </div>
-                {% endif %}
-
-                <div class="text-muted">
-                    <small>Date Identified: {{ lesson.date_identified }}</small><br>
-                    <small>Submitted by {{ lesson.submitted_by.get_full_name|default:lesson.submitted_by.username }} on {{ lesson.created_date }}</small><br>
-                    {% if lesson.modified_date != lesson.created_date %}
-                    <small>Last updated: {{ lesson.modified_date }}</small>
-                    {% endif %}
-                </div>
-            </div>
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Project Details</h5>
+        {% if user_role in 'OWNER,MANAGER' %}
+        <div class="btn-group">
+            <a href="#" class="btn btn-sm btn-outline-primary">
+                <i class="fas fa-edit me-1"></i>Edit Project
+            </a>
+            <a href="{% url 'add-team-member' project.pk %}" class="btn btn-sm btn-outline-primary">
+                <i class="fas fa-user-plus me-1"></i>Add Team Member
+            </a>
         </div>
-
-        <!-- Comments -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="mb-0">Comments ({{ comments.count }})</h5>
-            </div>
-            <div class="card-body">
-                {% if comments %}
-                <div class="comment-list">
-                    {% for comment in comments %}
-                    <div class="comment mb-3 p-3 {% if comment.author == user %}bg-light{% else %}bg-white{% endif %} border rounded">
-                        <div class="d-flex align-items-center mb-2">
-                            <img src="{{ comment.author.profile.image.url }}" class="rounded-circle me-2" width="30" height="30">
-                            <strong>{{ comment.author.get_full_name|default:comment.author.username }}</strong>
-                            <small class="text-muted ms-auto">{{ comment.created_date }}</small>
-                        </div>
-                        <div>{{ comment.text|linebreaks }}</div>
+        {% endif %}
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-8">
+                <h3 class="mb-3">{{ project.name }}</h3>
+                <p class="lead">{{ project.description }}</p>
+                
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <h5><i class="fas fa-calendar me-2"></i>Project Timeline</h5>
+                        <ul class="list-group mb-4">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Start Date
+                                <span>{{ project.start_date }}</span>
+                            </li>
+                            {% if project.end_date %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                End Date
+                                <span>{{ project.end_date }}</span>
+                            </li>
+                            {% endif %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Status
+                                <span class="badge {% if project.is_active %}bg-success{% else %}bg-secondary{% endif %} rounded-pill">
+                                    {% if project.is_active %}Active{% else %}Inactive{% endif %}
+                                </span>
+                            </li>
+                        </ul>
                     </div>
-                    {% endfor %}
+                    <div class="col-md-6">
+                        <h5><i class="fas fa-lightbulb me-2"></i>Lessons Stats</h5>
+                        <ul class="list-group">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Total Lessons
+                                <span class="badge bg-primary rounded-pill">{{ lesson_stats.total }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Implemented
+                                <span class="badge bg-success rounded-pill">
+                                    {{ lesson_stats.implemented|default:"0" }}
+                                </span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                High Impact
+                                <span class="badge bg-danger rounded-pill">
+                                    {{ lesson_stats.high_impact|default:"0" }}
+                                </span>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
-                {% else %}
-                <p class="text-muted">No comments yet.</p>
-                {% endif %}
-
-                <div class="mt-4">
-                    <h6>Add a Comment</h6>
-                    <form method="post">
-                        {% csrf_token %}
-                        {{ comment_form|crispy }}
-                        <button type="submit" class="btn btn-primary">Submit Comment</button>
-                    </form>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Team Members</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="list-group list-group-flush">
+                            {% for member in team_members %}
+                            <div class="list-group-item">
+                                <div class="d-flex align-items-center">
+                                    <img src="{{ member.user.profile.image.url }}" class="rounded-circle me-2" width="40" height="40" alt="{{ member.user.username }}">
+                                    <div>
+                                        <strong>{{ member.user.get_full_name|default:member.user.username }}</strong>
+                                        <small class="d-block text-muted">{{ member.get_role_display }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="list-group-item text-center py-3">
+                                <p class="text-muted mb-0">No team members added yet</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% if user_role in 'OWNER,MANAGER' %}
+                    <div class="card-footer text-center">
+                        <a href="{% url 'add-team-member' project.pk %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-user-plus me-1"></i>Add Team Member
+                        </a>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <div class="col-md-4">
-        <!-- Sidebar Info -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="mb-0">Lesson Information</h5>
-            </div>
-            <div class="card-body">
-                <div class="d-flex align-items-center mb-3">
-                    <img src="{{ lesson.submitted_by.profile.image.url }}" class="rounded-circle me-2" width="40" height="40">
-                    <div>
-                        <strong>{{ lesson.submitted_by.get_full_name|default:lesson.submitted_by.username }}</strong><br>
-                        <small class="text-muted">{{ lesson.submitted_by.profile.job_title }}</small>
-                    </div>
-                </div>
-
-                <ul class="list-group mb-3">
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        Project
-                        <span>{{ lesson.project.name }}</span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        Date Identified
-                        <span>{{ lesson.date_identified }}</span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        Status
-                        <span class="badge bg-{% if lesson.status == 'NEW' %}warning{% elif lesson.status == 'IMPLEMENTED' %}success{% else %}info{% endif %} rounded-pill">
-                            {{ lesson.get_status_display }}
-                        </span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        Impact
-                        <span class="badge bg-{% if lesson.impact == 'HIGH' %}danger{% elif lesson.impact == 'MEDIUM' %}warning{% else %}info{% endif %} rounded-pill">
-                            {{ lesson.get_impact_display }}
-                        </span>
-                    </li>
-                </ul>
-
-                {% if lesson.tags.exists %}
-                <h6>Tagged Users</h6>
-                <div class="mb-3">
-                    {% for user in lesson.tags.all %}
-                    <div class="d-inline-block me-2 mb-2">
-                        <img src="{{ user.profile.image.url }}" class="rounded-circle" width="25" height="25"
-                            data-bs-toggle="tooltip" title="{{ user.get_full_name|default:user.username }}">
-                    </div>
-                    {% endfor %}
-                </div>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- Attachments -->
-        {% if attachments %}
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="mb-0">Attachments ({{ attachments.count }})</h5>
-            </div>
-            <div class="card-body">
-                <div class="list-group">
-                    {% for attachment in attachments %}
-                    <a href="{{ attachment.file.url }}" class="list-group-item list-group-item-action" target="_blank">
+<!-- Lessons in this Project -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Project Lessons</h5>
+        <a href="{% url 'lesson-create' %}?project={{ project.pk }}" class="btn btn-sm btn-primary">
+            <i class="fas fa-plus me-1"></i>Add Lesson
+        </a>
+    </div>
+    <div class="card-body">
+        {% if project.lessons.exists %}
+        <div class="row">
+            <div class="col-md-8">
+                <!-- Lessons List -->
+                <div class="list-group mb-4">
+                    {% for lesson in project.lessons.all %}
+                    <a href="{% url 'lesson-detail' lesson.pk %}" class="list-group-item list-group-item-action">
                         <div class="d-flex w-100 justify-content-between">
-                            <h6 class="mb-1">
-                                <i class="fas fa-paperclip me-1"></i>
-                                {{ attachment.file.name|slice:"20:" }}
-                            </h6>
-                            <small>{{ attachment.uploaded_at|date }}</small>
+                            <h5 class="mb-1">{{ lesson.title }}</h5>
+                            <small>{{ lesson.date_identified }}</small>
                         </div>
-                        {% if attachment.description %}
-                        <small>{{ attachment.description }}</small>
-                        {% endif %}
-                        <small class="d-block text-muted">Uploaded by {{ attachment.uploaded_by.username }}</small>
+                        <p class="mb-1">{{ lesson.description|striptags|truncatechars:100 }}</p>
+                        <small>
+                            <span class="badge bg-primary">{{ lesson.category.name|default:"Uncategorized" }}</span>
+                            <span class="badge bg-{% if lesson.impact == 'HIGH' %}danger{% elif lesson.impact == 'MEDIUM' %}warning{% else %}info{% endif %}">
+                                {{ lesson.get_impact_display }}
+                            </span>
+                            <span class="badge bg-{% if lesson.status == 'NEW' %}warning{% elif lesson.status == 'IMPLEMENTED' %}success{% else %}info{% endif %}">
+                                {{ lesson.get_status_display }}
+                            </span>
+                        </small>
                     </a>
                     {% endfor %}
                 </div>
             </div>
+            <div class="col-md-4">
+                <!-- Category Distribution Chart -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">Categories</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="text-center py-5">
+                            <i class="fas fa-chart-pie fa-3x mb-3 text-muted"></i>
+                            <p class="text-muted">Chart will appear when there are enough lessons.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Status Distribution Chart -->
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">Status</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="text-center py-5">
+                            <i class="fas fa-chart-bar fa-3x mb-3 text-muted"></i>
+                            <p class="text-muted">Chart will appear when there are enough lessons.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-clipboard-list fa-3x mb-3 text-muted"></i>
+            <h5>No lessons for this project yet</h5>
+            <p class="text-muted">Start capturing lessons learned in this project</p>
+            <a href="{% url 'lesson-create' %}?project={{ project.pk }}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i>Add First Lesson
+            </a>
         </div>
         {% endif %}
     </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-    // Initialize tooltips
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl)
-    })
-</script>
 {% endblock %}
