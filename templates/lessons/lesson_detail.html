@@ -1,0 +1,224 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block title %}{{ lesson.title }} - Lessons Learned{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'lesson-list' %}">Lessons</a></li>
+            <li class="breadcrumb-item active">{{ lesson.title }}</li>
+        </ol>
+    </nav>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- Lesson Details -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Lesson Details</h5>
+                <div>
+                    {% if lesson.submitted_by == user or user.is_staff %}
+                    <a href="{% url 'lesson-update' lesson.pk %}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'lesson-detail' lesson.pk %}?star=1" class="btn btn-sm btn-outline-{% if is_starred %}warning{% else %}secondary{% endif %}">
+                        <i class="fas fa-star"></i> {% if is_starred %}Starred{% else %}Star{% endif %}
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <h3 class="mb-3">{{ lesson.title }}</h3>
+
+                <div class="mb-3">
+                    <span class="badge bg-secondary">Project: {{ lesson.project.name }}</span>
+                    <span class="badge bg-primary">Category: {{ lesson.category.name|default:"Uncategorized" }}</span>
+                    <span class="badge bg-{% if lesson.impact == 'HIGH' %}danger{% elif lesson.impact == 'MEDIUM' %}warning{% else %}info{% endif %}">
+                        Impact: {{ lesson.get_impact_display }}
+                    </span>
+                    <span class="badge bg-{% if lesson.status == 'NEW' %}warning{% elif lesson.status == 'IMPLEMENTED' %}success{% else %}info{% endif %}">
+                        Status: {{ lesson.get_status_display }}
+                    </span>
+                </div>
+
+                <h5>Description</h5>
+                <div class="mb-4">
+                    {{ lesson.description|safe }}
+                </div>
+
+                <h5>Recommendations</h5>
+                <div class="mb-4">
+                    {{ lesson.recommendations|safe }}
+                </div>
+
+                {% if lesson.implementation_notes %}
+                <h5>Implementation Notes</h5>
+                <div class="mb-4">
+                    {{ lesson.implementation_notes|safe }}
+                </div>
+                {% endif %}
+
+                <div class="text-muted">
+                    <small>Date Identified: {{ lesson.date_identified }}</small><br>
+                    <small>Submitted by {{ lesson.submitted_by.get_full_name|default:lesson.submitted_by.username }} on {{ lesson.created_date }}</small><br>
+                    {% if lesson.modified_date != lesson.created_date %}
+                    <small>Last updated: {{ lesson.modified_date }}</small>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Comments -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Comments ({{ comments.count }})</h5>
+            </div>
+            <div class="card-body">
+                {% if comments %}
+                <div class="comment-list">
+                    {% for comment in comments %}
+                    <div class="comment mb-3 p-3 {% if comment.author == user %}bg-light{% else %}bg-white{% endif %} border rounded">
+                        <div class="d-flex align-items-center mb-2">
+                            <img src="{{ comment.author.profile.image.url }}" class="rounded-circle me-2" width="30" height="30" alt="{{ comment.author.username }}">
+                            <strong>{{ comment.author.get_full_name|default:comment.author.username }}</strong>
+                            <small class="text-muted ms-auto">{{ comment.created_date }}</small>
+                        </div>
+                        <div>{{ comment.text|linebreaks }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">No comments yet.</p>
+                {% endif %}
+
+                <div class="mt-4">
+                    <h6>Add a Comment</h6>
+                    <form method="post">
+                        {% csrf_token %}
+                        {{ comment_form|crispy }}
+                        <button type="submit" class="btn btn-primary">Submit Comment</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <!-- Sidebar Info -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Lesson Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <img src="{{ lesson.submitted_by.profile.image.url }}" class="rounded-circle me-2" width="40" height="40" alt="{{ lesson.submitted_by.username }}">
+                    <div>
+                        <strong>{{ lesson.submitted_by.get_full_name|default:lesson.submitted_by.username }}</strong><br>
+                        <small class="text-muted">{{ lesson.submitted_by.profile.job_title }}</small>
+                    </div>
+                </div>
+
+                <ul class="list-group mb-3">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Project
+                        <span>{{ lesson.project.name }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Date Identified
+                        <span>{{ lesson.date_identified }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Status
+                        <span class="badge bg-{% if lesson.status == 'NEW' %}warning{% elif lesson.status == 'IMPLEMENTED' %}success{% else %}info{% endif %} rounded-pill">
+                            {{ lesson.get_status_display }}
+                        </span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Impact
+                        <span class="badge bg-{% if lesson.impact == 'HIGH' %}danger{% elif lesson.impact == 'MEDIUM' %}warning{% else %}info{% endif %} rounded-pill">
+                            {{ lesson.get_impact_display }}
+                        </span>
+                    </li>
+                </ul>
+
+                {% if lesson.tags.exists %}
+                <h6>Tagged Users</h6>
+                <div class="mb-3">
+                    {% for user in lesson.tags.all %}
+                    <div class="d-inline-block me-2 mb-2">
+                        <img src="{{ user.profile.image.url }}" class="rounded-circle" width="25" height="25" alt="{{ user.username }}"
+                            data-bs-toggle="tooltip" title="{{ user.get_full_name|default:user.username }}">
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Attachments -->
+        {% if attachments %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Attachments ({{ attachments.count }})</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    {% for attachment in attachments %}
+                    <a href="{{ attachment.file.url }}" class="list-group-item list-group-item-action" target="_blank">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">
+                                <i class="fas fa-paperclip me-1"></i>
+                                {{ attachment.file.name|slice:"20:" }}
+                            </h6>
+                            <small>{{ attachment.uploaded_at|date }}</small>
+                        </div>
+                        {% if attachment.description %}
+                        <small>{{ attachment.description }}</small>
+                        {% endif %}
+                        <small class="d-block text-muted">Uploaded by {{ attachment.uploaded_by.username }}</small>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Related Lessons -->
+        {% if related_lessons %}
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Related Lessons</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for related in related_lessons %}
+                    <a href="{% url 'lesson-detail' related.pk %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ related.title }}</h6>
+                            <small>{{ related.date_identified }}</small>
+                        </div>
+                        <small>{{ related.get_impact_display }} Impact</small>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+</script>
+{% endblock %}
