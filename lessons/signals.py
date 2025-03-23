@@ -18,6 +18,35 @@ def notify_tagged_users(sender, instance, created, **kwargs):
                 'lesson': instance,
                 'project': instance.project,
                 'submitted_by': instance.submitted_by,
+                'site_url': settings.SITE_URL,
+            })
+            
+            plain_message = strip_tags(html_message)
+            
+            # Send to each tagged user
+            recipient_list = [user.email for user in tagged_users if user.email]
+            if recipient_list:
+                send_mail(
+                    subject,
+                    plain_message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    recipient_list,
+                    html_message=html_message,
+                )
+
+@receiver(post_save, sender=Comment)
+def notify_lesson_owner(sender, instance, created, **kwargs):
+    if created:
+        lesson = instance.lesson
+        # Only notify if the comment author is not the lesson submitter
+        if instance.author != lesson.submitted_by:
+            subject = f'New comment on your lesson: {lesson.title}'
+            
+            html_message = render_to_string('lessons/email/comment_notification.html', {
+                'lesson': lesson,
+                'comment': instance,
+                'author': instance.author,
+                'site_url': settings.SITE_URL,
             })
             
             plain_message = strip_tags(html_message)
@@ -26,6 +55,6 @@ def notify_tagged_users(sender, instance, created, **kwargs):
                 subject,
                 plain_message,
                 settings.DEFAULT_FROM_EMAIL,
-                [instance.submitted_by.email],
+                [lesson.submitted_by.email],
                 html_message=html_message,
             )
