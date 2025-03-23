@@ -4,3 +4,7 @@ crispy-bootstrap4==2022.1
 django-filter==23.3
 django-summernote==0.8.20.0
 Pillow==10.1.0
+WeasyPrint==59.0
+python-dotenv==1.0.0
+gunicorn==21.2.0
+whitenoise==6.5.0
