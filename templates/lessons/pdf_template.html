@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Lessons Learned Report</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            line-height: 1.5;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            color: #007bff;
+            margin-bottom: 5px;
+        }
+        .header p {
+            color: #777;
+            margin-top: 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        .section h2 {
+            color: #007bff;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #777;
+            font-size: 10px;
+        }
+        @page {
+            size: a4 portrait;
+            margin: 2cm;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Lessons Learned Report</h1>
+        <p>Generated on {% now "F j, Y" %}</p>
+    </div>
+    
+    {% for lesson in lessons %}
+    <div class="section">
+        <h2>{{ lesson.title }}</h2>
+        
+        <table>
+            <tr>
+                <th style="width: 20%">Project</th>
+                <td>{{ lesson.project.name }}</td>
+                <th style="width: 20%">Date Identified</th>
+                <td>{{ lesson.date_identified }}</td>
+            </tr>
+            <tr>
+                <th>Category</th>
+                <td>{{ lesson.category.name|default:"Uncategorized" }}</td>
+                <th>Status</th>
+                <td>{{ lesson.get_status_display }}</td>
+            </tr>
+            <tr>
+                <th>Impact</th>
+                <td>{{ lesson.get_impact_display }}</td>
+                <th>Submitted By</th>
+                <td>{{ lesson.submitted_by.get_full_name|default:lesson.submitted_by.username }}</td>
+            </tr>
+        </table>
+        
+        <h3>Description</h3>
+        <div>{{ lesson.description|safe }}</div>
+        
+        <h3>Recommendations</h3>
+        <div>{{ lesson.recommendations|safe }}</div>
+        
+        {% if lesson.implementation_notes %}
+        <h3>Implementation Notes</h3>
+        <div>{{ lesson.implementation_notes|safe }}</div>
+        {% endif %}
+    </div>
+    
+    {% if not forloop.last %}
+    <div style="page-break-after: always;"></div>
+    {% endif %}
+    {% endfor %}
+    
+    <div class="footer">
+        <p>This report was generated from the Lessons Learned System.</p>
+    </div>
+</body>
+</html>

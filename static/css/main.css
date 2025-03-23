@@ -1,0 +1,101 @@
+/* Custom styles for Lessons Learned System */
+
+/* General styles */
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+main {
+    flex: 1;
+}
+
+/* Cards */
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border-radius: 0.5rem;
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.card-header:first-child {
+    border-radius: calc(0.5rem - 1px) calc(0.5rem - 1px) 0 0;
+}
+
+/* Navbar */
+.navbar-brand {
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+/* Dashboard stats cards */
+.card .display-4 {
+    font-weight: 600;
+}
+
+/* Lesson status badges */
+.badge {
+    font-weight: 500;
+    padding: 0.35em 0.65em;
+}
+
+/* Lesson cards hover effect */
+.card.h-100:hover {
+    transform: translateY(-3px);
+    transition: transform 0.2s ease-in-out;
+}
+
+/* Dashboard charts */
+canvas {
+    max-height: 250px;
+}
+
+/* Comment styles */
+.comment {
+    transition: background-color 0.2s ease;
+}
+
+.comment:hover {
+    background-color: #f8f9fa !important;
+}
+
+/* Profile image */
+.profile-img {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 5px solid #fff;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+/* Form styling */
+.select2-container--default .select2-selection--multiple {
+    border-color: #ced4da !important;
+}
+
+/* Make summernote toolbar sticky */
+.note-toolbar.card-header {
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
