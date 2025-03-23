@@ -45,233 +45,193 @@
     <div class="col-md-9">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">Project Details</h5>
-        {% if user_role in 'OWNER,MANAGER' %}
-        <div class="btn-group">
-            <a href="#" class="btn btn-sm btn-outline-primary">
-                <i class="fas fa-edit me-1"></i>Edit Project
-            </a>
-            <a href="{% url 'add-team-member' project.pk %}" class="btn btn-sm btn-outline-primary">
-                <i class="fas fa-user-plus me-1"></i>Add Team Member
-            </a>
-        </div>
-        {% endif %}
-    </div>
-    <div class="card-body">
-        <div class="row">
-            <div class="col-md-8">
-                <h3 class="mb-3">{{ project.name }}</h3>
-                <p class="lead">{{ project.description }}</p>
-                
-                <div class="row mt-4">
-                    <div class="col-md-6">
-                        <h5><i class="fas fa-calendar me-2"></i>Project Timeline</h5>
-                        <ul class="list-group mb-4">
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                Start Date
-                                <span>{{ project.start_date }}</span>
-                            </li>
-                            {% if project.end_date %}
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                End Date
-                                <span>{{ project.end_date }}</span>
-                            </li>
-                            {% endif %}
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                Status
-                                <span class="badge {% if project.is_active %}bg-success{% else %}bg-secondary{% endif %} rounded-pill">
-                                    {% if project.is_active %}Active{% else %}Inactive{% endif %}
-                                </span>
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="col-md-6">
-                        <h5><i class="fas fa-lightbulb me-2"></i>Lessons Stats</h5>
-                        <ul class="list-group">
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                Total Lessons
-                                <span class="badge bg-primary rounded-pill">{{ lesson_stats.total }}</span>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                Implemented
-                                <span class="badge bg-success rounded-pill">
-                                    {{ lesson_stats.by_status|dictsort:"status"|selectattr:"status","equalto":"IMPLEMENTED"|first|default:0 }}
-                                </span>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                High Impact
-                                <span class="badge bg-danger rounded-pill">
-                                    {{ lesson_stats.by_impact|dictsort:"impact"|selectattr:"impact","equalto":"HIGH"|first|default:0 }}
-                                </span>
-                            </li>
-                        </ul>
-                    </div>
+                <h5 class="mb-0">
+                    Results 
+                    <small class="text-muted">({{ filter.qs.count }} lessons)</small>
+                </h5>
+                <div class="btn-group btn-group-sm">
+                    <button type="button" class="btn btn-outline-secondary active" id="viewCards">
+                        <i class="fas fa-th"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" id="viewList">
+                        <i class="fas fa-list"></i>
+                    </button>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">Team Members</h5>
-                    </div>
-                    <div class="card-body p-0">
-                        <div class="list-group list-group-flush">
-                            {% for member in team_members %}
-                            <div class="list-group-item">
-                                <div class="d-flex align-items-center">
-                                    <img src="{{ member.user.profile.image.url }}" class="rounded-circle me-2" width="40" height="40">
-                                    <div>
-                                        <strong>{{ member.user.get_full_name|default:member.user.username }}</strong>
-                                        <small class="d-block text-muted">{{ member.get_role_display }}</small>
-                                    </div>
+            <div class="card-body">
+                {% if filter.qs %}
+                <!-- Card View (default) -->
+                <div id="cardView" class="row">
+                    {% for lesson in page_obj %}
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <h6 class="card-title mb-0">{{ lesson.title }}</h6>
+                                    {% if lesson.starred_by.filter(id=user.id).exists %}
+                                    <i class="fas fa-star text-warning"></i>
+                                    {% endif %}
                                 </div>
+                                <small class="text-muted">{{ lesson.project.name }}</small>
                             </div>
-                            {% endfor %}
+                            <div class="card-body">
+                                <p class="card-text">{{ lesson.description|striptags|truncatechars:100 }}</p>
+                                <div class="mb-2">
+                                    <span class="badge bg-primary">{{ lesson.category.name|default:"Uncategorized" }}</span>
+                                    <span class="badge bg-{% if lesson.impact == 'HIGH' %}danger{% elif lesson.impact == 'MEDIUM' %}warning{% else %}info{% endif %}">
+                                        {{ lesson.get_impact_display }}
+                                    </span>
+                                    <span class="badge bg-{% if lesson.status == 'NEW' %}warning{% elif lesson.status == 'IMPLEMENTED' %}success{% else %}info{% endif %}">
+                                        {{ lesson.get_status_display }}
+                                    </span>
+                                </div>
+                                <small class="text-muted">
+                                    <i class="far fa-calendar-alt me-1"></i>{{ lesson.date_identified }}
+                                </small>
+                            </div>
+                            <div class="card-footer bg-transparent">
+                                <a href="{% url 'lesson-detail' lesson.pk %}" class="btn btn-sm btn-primary stretched-link">View Details</a>
+                            </div>
                         </div>
                     </div>
-                    {% if user_role in 'OWNER,MANAGER' %}
-                    <div class="card-footer text-center">
-                        <a href="{% url 'add-team-member' project.pk %}" class="btn btn-sm btn-outline-primary">
-                            <i class="fas fa-user-plus me-1"></i>Add Team Member
-                        </a>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Lessons in this Project -->
-<div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">Project Lessons</h5>
-        <a href="{% url 'lesson-create' %}?project={{ project.pk }}" class="btn btn-sm btn-primary">
-            <i class="fas fa-plus me-1"></i>Add Lesson
-        </a>
-    </div>
-    <div class="card-body">
-        {% if project.lessons.exists %}
-        <div class="row">
-            <div class="col-md-8">
-                <!-- Lessons List -->
-                <div class="list-group mb-4">
-                    {% for lesson in project.lessons.all|dictsort:"-created_date" %}
-                    <a href="{% url 'lesson-detail' lesson.pk %}" class="list-group-item list-group-item-action">
-                        <div class="d-flex w-100 justify-content-between">
-                            <h5 class="mb-1">{{ lesson.title }}</h5>
-                            <small>{{ lesson.date_identified }}</small>
-                        </div>
-                        <p class="mb-1">{{ lesson.description|truncatechars:100 }}</p>
-                        <small>
-                            <span class="badge bg-primary">{{ lesson.category.name|default:"Uncategorized" }}</span>
-                            <span class="badge bg-{% if lesson.impact == 'HIGH' %}danger{% elif lesson.impact == 'MEDIUM' %}warning{% else %}info{% endif %}">
-                                {{ lesson.get_impact_display }}
-                            </span>
-                            <span class="badge bg-{% if lesson.status == 'NEW' %}warning{% elif lesson.status == 'IMPLEMENTED' %}success{% else %}info{% endif %}">
-                                {{ lesson.get_status_display }}
-                            </span>
-                        </small>
-                    </a>
                     {% endfor %}
                 </div>
-            </div>
-            <div class="col-md-4">
-                <!-- Category Distribution Chart -->
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h6 class="mb-0">Categories</h6>
-                    </div>
-                    <div class="card-body">
-                        <canvas id="categoriesChart"></canvas>
+                
+                <!-- List View (hidden by default) -->
+                <div id="listView" class="d-none">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Project</th>
+                                    <th>Category</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Impact</th>
+                                    <th>Submitted by</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for lesson in page_obj %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'lesson-detail' lesson.pk %}">
+                                            {{ lesson.title }}
+                                            {% if lesson.starred_by.filter(id=user.id).exists %}
+                                            <i class="fas fa-star text-warning ms-1"></i>
+                                            {% endif %}
+                                        </a>
+                                    </td>
+                                    <td>{{ lesson.project.name }}</td>
+                                    <td>{{ lesson.category.name|default:"Uncategorized" }}</td>
+                                    <td>{{ lesson.date_identified }}</td>
+                                    <td>
+                                        <span class="badge bg-{% if lesson.status == 'NEW' %}warning{% elif lesson.status == 'IMPLEMENTED' %}success{% else %}info{% endif %}">
+                                            {{ lesson.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{% if lesson.impact == 'HIGH' %}danger{% elif lesson.impact == 'MEDIUM' %}warning{% else %}info{% endif %}">
+                                            {{ lesson.get_impact_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ lesson.submitted_by.username }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
                 
-                <!-- Status Distribution Chart -->
-                <div class="card">
-                    <div class="card-header">
-                        <h6 class="mb-0">Status</h6>
-                    </div>
-                    <div class="card-body">
-                        <canvas id="statusChart"></canvas>
-                    </div>
+                <!-- Pagination -->
+                {% if page_obj.has_other_pages %}
+                <div class="mt-4">
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page=1" aria-label="First">
+                                    <span aria-hidden="true">&laquo;&laquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.previous_page_number }}" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" tabindex="-1" aria-disabled="true">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                            
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                    <li class="page-item active" aria-current="page">
+                                        <span class="page-link">{{ num }}</span>
+                                    </li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ num }}">{{ num }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.next_page_number }}" aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.paginator.num_pages }}" aria-label="Last">
+                                    <span aria-hidden="true">&raquo;&raquo;</span>
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" tabindex="-1" aria-disabled="true">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
                 </div>
+                {% endif %}
+                
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-search fa-3x mb-3 text-muted"></i>
+                    <h5>No lessons match your filters</h5>
+                    <p class="text-muted">Try changing your search criteria or clear filters</p>
+                    <a href="{% url 'lesson-list' %}" class="btn btn-outline-primary">Reset Filters</a>
+                </div>
+                {% endif %}
             </div>
         </div>
-        {% else %}
-        <div class="text-center py-5">
-            <i class="fas fa-clipboard-list fa-3x mb-3 text-muted"></i>
-            <h5>No lessons for this project yet</h5>
-            <p class="text-muted">Start capturing lessons learned in this project</p>
-            <a href="{% url 'lesson-create' %}?project={{ project.pk }}" class="btn btn-primary">
-                <i class="fas fa-plus me-1"></i>Add First Lesson
-            </a>
-        </div>
-        {% endif %}
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
-{% if project.lessons.exists %}
-{{ lesson_stats.by_category|json_script:"category-stats-data" }}
-{{ lesson_stats.by_status|json_script:"status-stats-data" }}
 <script>
-    // Load data from Django templates
-    const categoryStats = JSON.parse(document.getElementById('category-stats-data').textContent);
-    const statusStats = JSON.parse(document.getElementById('status-stats-data').textContent);
-    
-    const categoryLabels = categoryStats.map(item => item.category__name || 'Uncategorized');
-    const categoryData = categoryStats.map(item => item.count);
-    
-    const statusLabels = statusStats.map(item => item.status);
-    const statusData = statusStats.map(item => item.count);
-
-    // Category Distribution Chart
-    const ctxCategories = document.getElementById('categoriesChart').getContext('2d');
-    const categoriesChart = new Chart(ctxCategories, {
-        type: 'pie',
-        data: {
-            labels: categoryLabels,
-            datasets: [{
-                data: categoryData,
-                backgroundColor: [
-                    '#007bff', '#28a745', '#dc3545', '#ffc107', '#17a2b8',
-                    '#6610f2', '#fd7e14', '#20c997', '#e83e8c', '#6c757d'
-                ]
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: 'right',
-                }
-            }
-        }
+    // Toggle between card and list view
+    document.getElementById('viewCards').addEventListener('click', function() {
+        document.getElementById('cardView').classList.remove('d-none');
+        document.getElementById('listView').classList.add('d-none');
+        this.classList.add('active');
+        document.getElementById('viewList').classList.remove('active');
     });
     
-    // Status Distribution Chart
-    const ctxStatus = document.getElementById('statusChart').getContext('2d');
-    const statusChart = new Chart(ctxStatus, {
-        type: 'doughnut',
-        data: {
-            labels: statusLabels,
-            datasets: [{
-                data: statusData,
-                backgroundColor: [
-                    '#ffc107', '#17a2b8', '#007bff', '#28a745', '#6c757d'
-                ]
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: 'right',
-                }
-            }
-        }
+    document.getElementById('viewList').addEventListener('click', function() {
+        document.getElementById('listView').classList.remove('d-none');
+        document.getElementById('cardView').classList.add('d-none');
+        this.classList.add('active');
+        document.getElementById('viewCards').classList.remove('active');
     });
 </script>
-{% endif %}
 {% endblock %}
