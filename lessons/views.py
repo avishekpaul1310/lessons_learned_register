@@ -10,7 +10,7 @@ from django_filters.views import FilterView
 from .filters import LessonFilter
 import csv
 from django.template.loader import render_to_string
-from weasyprint import HTML
+#from weasyprint import HTML
 import tempfile
 from django.db.models import Count, Q
 
@@ -239,14 +239,16 @@ def export_lessons_csv(queryset):
     return response
 
 def export_lessons_pdf(queryset):
+    """
+    Temporary PDF export function that returns an HTML file
+    instead of a PDF while WeasyPrint is unavailable.
+    """
     html_string = render_to_string('lessons/pdf_template.html', {'lessons': queryset})
     
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename="lessons_learned.pdf"'
+    response = HttpResponse(content_type='text/html')
+    response['Content-Disposition'] = 'attachment; filename="lessons_learned.html"'
     
-    # Generate PDF
-    HTML(string=html_string).write_pdf(response)
-    
+    response.write(html_string)
     return response
 
 @login_required
