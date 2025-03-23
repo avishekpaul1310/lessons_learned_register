@@ -7,7 +7,7 @@ from projects.models import Project
 class LessonFilter(django_filters.FilterSet):
     title = django_filters.CharFilter(
         lookup_expr='icontains',
-        widget=forms.TextInput(attrs={'placeholder': 'Search lessons...'})
+        widget=forms.TextInput(attrs={'placeholder': 'Search lessons...', 'class': 'form-control'})
     )
     
     project = django_filters.ModelChoiceFilter(
@@ -38,29 +38,29 @@ class LessonFilter(django_filters.FilterSet):
     date_from = django_filters.DateFilter(
         field_name='date_identified',
         lookup_expr='gte',
-        widget=forms.DateInput(attrs={'type': 'date'})
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'})
     )
     
     date_to = django_filters.DateFilter(
         field_name='date_identified',
         lookup_expr='lte',
-        widget=forms.DateInput(attrs={'type': 'date'})
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'})
     )
     
     is_starred = django_filters.BooleanFilter(
         field_name='starred_by',
         method='filter_starred',
-        widget=forms.CheckboxInput()
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
     )
     
     def filter_starred(self, queryset, name, value):
-        if value and self.request and self.request.user:
+        if value and hasattr(self, 'request') and self.request and self.request.user and self.request.user.is_authenticated:
             return queryset.filter(starred_by=self.request.user)
         return queryset
     
     def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request', None)
         super().__init__(*args, **kwargs)
-        self.request = kwargs.get('request')
         
         # If user is logged in, filter projects by user's projects
         if self.request and self.request.user.is_authenticated:
