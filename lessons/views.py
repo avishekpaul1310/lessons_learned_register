@@ -10,7 +10,8 @@ from django_filters.views import FilterView
 from .filters import LessonFilter
 import csv
 from django.template.loader import render_to_string
-#from weasyprint import HTML
+# Comment out WeasyPrint to avoid dependency issues on Windows
+# from weasyprint import HTML
 import tempfile
 from django.db.models import Count, Q
 
@@ -238,17 +239,32 @@ def export_lessons_csv(queryset):
     
     return response
 
+# Alternative PDF export that doesn't use WeasyPrint
 def export_lessons_pdf(queryset):
     """
-    Temporary PDF export function that returns an HTML file
-    instead of a PDF while WeasyPrint is unavailable.
+    HTML-based alternative to WeasyPrint PDF export
     """
     html_string = render_to_string('lessons/pdf_template.html', {'lessons': queryset})
     
     response = HttpResponse(content_type='text/html')
     response['Content-Disposition'] = 'attachment; filename="lessons_learned.html"'
     
-    response.write(html_string)
+    # Add print script to automatically print when opened
+    print_script = """
+    <script>
+        window.onload = function() {
+            document.title = "Lessons Learned Report";
+            setTimeout(function() {
+                window.print();
+            }, 500);
+        }
+    </script>
+    """
+    
+    # Insert the script right before the closing </body> tag
+    modified_html = html_string.replace('</body>', f'{print_script}</body>')
+    
+    response.write(modified_html)
     return response
 
 @login_required
@@ -288,6 +304,12 @@ def dashboard(request):
         status_display = dict(Lesson.STATUS_CHOICES).get(status_code, status_code)
         lessons_by_status[status_display] = item['count']
     
+    # Get high impact lessons count
+    high_impact_count = Lesson.objects.filter(
+        project__in=user_projects, 
+        impact='HIGH'
+    ).count()
+    
     context = {
         'latest_lessons': latest_lessons,
         'starred_lessons': starred_lessons,
@@ -295,6 +317,7 @@ def dashboard(request):
         'lessons_by_status': lessons_by_status,
         'total_lessons': Lesson.objects.filter(project__in=user_projects).count(),
         'user_projects': user_projects,
+        'high_impact_count': high_impact_count,
     }
     
     return render(request, 'lessons/dashboard.html', context)
