@@ -37,7 +37,7 @@ def lesson_list(request):
             return export_lessons_pdf(filtered_lessons)
     
     # Pagination
-    paginator = Paginator(lesson_filter.qs, 12)  # Show 12 lessons per page
+    paginator = Paginator(lesson_filter.qs.order_by('-created_date'), 12)  # Show 12 lessons per page
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     

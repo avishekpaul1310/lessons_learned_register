@@ -540,6 +540,8 @@ class LessonsFilterTests(TestCase):
             email='test@example.com',
             password='testpassword'
         )
+
+        self.request = type('MockRequest', (), {'user': self.user})
         
         self.project1 = Project.objects.create(
             name='Project 1',
@@ -665,10 +667,17 @@ class LessonsFilterTests(TestCase):
     
         # Now star only the specific lesson we want to test
         self.lesson1.starred_by.add(self.user)
+
+        self.request.user = self.user
     
         # Now test the filter
         filter_data = {'is_starred': True}
         f = LessonFilter(filter_data, Lesson.objects.all(), request=self.request)
+
+        print(f"User in request: {self.request.user.username}")
+        print(f"Lesson1 starred by: {[u.username for u in self.lesson1.starred_by.all()]}")
+        print(f"Filter query count: {f.qs.count()}")
+        print(f"Lessons in query: {[l.title for l in f.qs]}")
     
         self.assertEqual(f.qs.count(), 1)
         self.assertIn(self.lesson1, f.qs)
