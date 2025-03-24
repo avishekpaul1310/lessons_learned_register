@@ -1,8 +1,28 @@
-# Basic Django requirements for development (without WeasyPrint)
+# Core Django Requirements
 Django==4.2.7
+python-dotenv==1.0.0
+
+# Forms and UI
 django-crispy-forms==2.0
 crispy-bootstrap4==2022.1
-django-filter==23.3
 django-summernote==0.8.20.0
+
+# Image Processing
 Pillow==10.1.0
-python-dotenv==1.0.0
+
+# Filtering and Searching
+django-filter==23.3
+
+# Testing and Development
+coverage==7.3.2
+colorama==0.4.6
+
+# Production (uncomment for deployment)
+# gunicorn==21.2.0
+# psycopg2-binary==2.9.9  # PostgreSQL adapter
+# django-storages==1.14.2  # For cloud storage (AWS, GCP, etc.)
+# django-debug-toolbar==4.2.0  # For development debugging
+
+# Optional PDF Export (uncomment if needed)
+# WeasyPrint==60.1
+# django-weasyprint==2.2.0
