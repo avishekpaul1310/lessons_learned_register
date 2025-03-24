@@ -54,8 +54,14 @@ class LessonFilter(django_filters.FilterSet):
     )
     
     def filter_starred(self, queryset, name, value):
-        if value and hasattr(self, 'request') and self.request and self.request.user and self.request.user.is_authenticated:
-            return queryset.filter(starred_by=self.request.user)
+        """Filter lessons by whether they are starred by the current user."""
+    # Only apply the filter if value is True (checkbox is checked)
+        if value:
+        # Make sure we have a valid request and user
+            if hasattr(self, 'request') and self.request and hasattr(self.request, 'user') and self.request.user.is_authenticated:
+            # Return only lessons where the current user is in the starred_by relationship
+                return queryset.filter(starred_by=self.request.user)
+    # Otherwise, return unfiltered queryset
         return queryset
     
     def __init__(self, *args, **kwargs):
