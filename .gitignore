@@ -19,6 +19,9 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
+.coverage
+htmlcov/
+.pytest_cache/
 
 # Django
 *.log
@@ -26,17 +29,66 @@ local_settings.py
 db.sqlite3
 db.sqlite3-journal
 media/
+staticfiles/
 
 # Virtual Environment
 venv/
 ENV/
+.env
 
 # IDE specific files
 .idea/
 .vscode/
 *.swp
 *.swo
-
-# OS specific files
 .DS_Store
 Thumbs.db
+
+# Node.js/npm (if using frontend assets)
+node_modules/
+npm-debug.log
+package-lock.json
+
+# Cache files
+.sass-cache/
+.cache/
+__pycache__/
+
+# Distribution / packaging
+.Python
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.Python
+env/
+.env
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Windows Installer files
+*.cab
+*.msi
+*.msm
+*.msp
+*.lnk
+
+# Project specific
+.env.local
+.env.development
+.env.test
+.env.production
