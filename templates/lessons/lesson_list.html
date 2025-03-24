@@ -71,7 +71,15 @@
                                     {% for starred_user in lesson.starred_by.all %}
                                     {% if starred_user.id == user.id %}
                                     <i class="fas fa-star text-warning"></i>
-                                    {% break %}
+                                    {% with is_starred=False %}
+                                    {% for starred_user in lesson.starred_by.all %}
+                                    {% if starred_user.id == user.id %}
+                                    {% with is_starred=True %}
+                                    <i class="fas fa-star text-warning"></i>
+                                    {% endwith %}
+                                    {% endif %}
+                                    {% endfor %}
+                                    {% endwith %}
                                     {% endif %}
                                     {% endfor %}
                                 </div>
@@ -127,7 +135,15 @@
                                             {% for starred_user in lesson.starred_by.all %}
                                             {% if starred_user.id == user.id %}
                                             <i class="fas fa-star text-warning"></i>
-                                            {% break %}
+                                            {% with is_starred=False %}
+                                            {% for starred_user in lesson.starred_by.all %}
+                                            {% if starred_user.id == user.id %}
+                                            {% with is_starred=True %}
+                                            <i class="fas fa-star text-warning"></i>
+                                            {% endwith %}
+                                            {% endif %}
+                                            {% endfor %}
+                                            {% endwith %}
                                             {% endif %}
                                             {% endfor %}
                                         </a>
