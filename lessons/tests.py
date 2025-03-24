@@ -659,9 +659,17 @@ class LessonsFilterTests(TestCase):
         
     def test_filter_by_starred(self):
         """Test filtering lessons by starred status."""
+        # Clear out any existing stars first
+        for lesson in Lesson.objects.all():
+            lesson.starred_by.clear()
+    
+        # Now star only the specific lesson we want to test
+        self.lesson1.starred_by.add(self.user)
+    
+        # Now test the filter
         filter_data = {'is_starred': True}
         f = LessonFilter(filter_data, Lesson.objects.all(), request=self.request)
-        
+    
         self.assertEqual(f.qs.count(), 1)
         self.assertIn(self.lesson1, f.qs)
         self.assertNotIn(self.lesson2, f.qs)
