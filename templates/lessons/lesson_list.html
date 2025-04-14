@@ -68,20 +68,9 @@
                             <div class="card-header">
                                 <div class="d-flex justify-content-between align-items-start">
                                     <h6 class="card-title mb-0">{{ lesson.title }}</h6>
-                                    {% for starred_user in lesson.starred_by.all %}
-                                    {% if starred_user.id == user.id %}
+                                    {% if user in lesson.starred_by.all %}
                                     <i class="fas fa-star text-warning"></i>
-                                    {% with is_starred=False %}
-                                    {% for starred_user in lesson.starred_by.all %}
-                                    {% if starred_user.id == user.id %}
-                                    {% with is_starred=True %}
-                                    <i class="fas fa-star text-warning"></i>
-                                    {% endwith %}
                                     {% endif %}
-                                    {% endfor %}
-                                    {% endwith %}
-                                    {% endif %}
-                                    {% endfor %}
                                 </div>
                                 <small class="text-muted">{{ lesson.project.name }}</small>
                             </div>
@@ -132,20 +121,9 @@
                                     <td>
                                         <a href="{% url 'lesson-detail' lesson.pk %}">
                                             {{ lesson.title }}
-                                            {% for starred_user in lesson.starred_by.all %}
-                                            {% if starred_user.id == user.id %}
+                                            {% if user in lesson.starred_by.all %}
                                             <i class="fas fa-star text-warning"></i>
-                                            {% with is_starred=False %}
-                                            {% for starred_user in lesson.starred_by.all %}
-                                            {% if starred_user.id == user.id %}
-                                            {% with is_starred=True %}
-                                            <i class="fas fa-star text-warning"></i>
-                                            {% endwith %}
                                             {% endif %}
-                                            {% endfor %}
-                                            {% endwith %}
-                                            {% endif %}
-                                            {% endfor %}
                                         </a>
                                     </td>
                                     <td>{{ lesson.project.name }}</td>
