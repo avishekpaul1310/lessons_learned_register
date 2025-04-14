@@ -111,8 +111,8 @@ def lesson_create(request):
             if form.cleaned_data.get('tagged_users'):
                 lesson.tags.set(form.cleaned_data['tagged_users'])
             
-            # Handle attachments
-            if attachment_form.is_valid() and request.FILES:
+            # Handle attachments - only create if file was uploaded
+            if attachment_form.is_valid() and attachment_form.cleaned_data and 'file' in attachment_form.cleaned_data:
                 attachment = attachment_form.save(commit=False)
                 attachment.lesson = lesson
                 attachment.uploaded_by = request.user
@@ -156,8 +156,8 @@ def lesson_update(request, pk):
             if form.cleaned_data.get('tagged_users'):
                 lesson.tags.set(form.cleaned_data['tagged_users'])
             
-            # Handle attachments
-            if attachment_form.is_valid() and request.FILES:
+            # Handle attachments - only create if file was uploaded
+            if attachment_form.is_valid() and attachment_form.cleaned_data and 'file' in attachment_form.cleaned_data:
                 attachment = attachment_form.save(commit=False)
                 attachment.lesson = lesson
                 attachment.uploaded_by = request.user
@@ -310,11 +310,27 @@ def dashboard(request):
         impact='HIGH'
     ).count()
     
+    # Prepare JSON data for charts
+    import json
+    category_labels = list(lessons_by_category.keys())
+    category_data = list(lessons_by_category.values())
+    category_json_labels = json.dumps(category_labels)
+    category_json_data = json.dumps(category_data)
+    
+    status_labels = list(lessons_by_status.keys())
+    status_data = list(lessons_by_status.values())
+    status_json_labels = json.dumps(status_labels)
+    status_json_data = json.dumps(status_data)
+    
     context = {
         'latest_lessons': latest_lessons,
         'starred_lessons': starred_lessons,
         'lessons_by_category': lessons_by_category,
         'lessons_by_status': lessons_by_status,
+        'category_json_labels': category_json_labels,
+        'category_json_data': category_json_data,
+        'status_json_labels': status_json_labels,
+        'status_json_data': status_json_data,
         'total_lessons': Lesson.objects.filter(project__in=user_projects).count(),
         'user_projects': user_projects,
         'high_impact_count': high_impact_count,

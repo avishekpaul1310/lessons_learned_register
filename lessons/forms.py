@@ -52,9 +52,20 @@ class LessonForm(forms.ModelForm):
                 pass
 
 class AttachmentForm(forms.ModelForm):
+    # Make file field optional for form display, but will validate in clean if submitted
+    file = forms.FileField(required=False)
+    
     class Meta:
         model = Attachment
         fields = ['file', 'description']
+        
+    def clean(self):
+        cleaned_data = super().clean()
+        # If the form was submitted with no file, return empty cleaned_data
+        # This will cause the view to skip creating the attachment
+        if not cleaned_data.get('file'):
+            return {}
+        return cleaned_data
 
 class CommentForm(forms.ModelForm):
     class Meta:

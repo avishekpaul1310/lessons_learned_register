@@ -231,64 +231,98 @@
 
 {% block extra_js %}
 <script>
-    // Prepare data for the Category Chart
-    const categoryLabels = JSON.parse('{{ lessons_by_category.keys|escapejs }}');
-    const categoryData = JSON.parse('{{ lessons_by_category.values|escapejs }}');
-    
-    // Prepare data for the Status Chart
-    const statusLabels = JSON.parse('{{ lessons_by_status.keys|escapejs }}');
-    const statusData = JSON.parse('{{ lessons_by_status.values|escapejs }}');
-    
-    // Category Chart
-    const ctxCategory = document.getElementById('categoryChart').getContext('2d');
-    const categoryChart = new Chart(ctxCategory, {
-        type: 'pie',
-        data: {
-            labels: categoryLabels,
-            datasets: [{
-                data: categoryData,
-                backgroundColor: [
-                    '#007bff', '#28a745', '#dc3545', '#ffc107', '#17a2b8',
-                    '#6610f2', '#fd7e14', '#20c997', '#e83e8c', '#6c757d'
-                ]
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'right',
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get chart data from hidden elements instead of directly using Django variables in JS
+        try {
+            // Category chart data
+            var categoryLabels = [];
+            var categoryData = [];
+            
+            categoryLabels = JSON.parse('{{ category_json_labels|default:"[]"|escapejs }}');
+            categoryData = JSON.parse('{{ category_json_data|default:"[]"|escapejs }}');
+            
+            // Status chart data
+            var statusLabels = [];
+            var statusData = [];
+            
+            statusLabels = JSON.parse('{{ status_json_labels|default:"[]"|escapejs }}');
+            statusLabels = JSON.parse('{{ status_json_labels|default:"[]"|escapejs }}');
+            statusData = JSON.parse('{{ status_json_data|default:"[]"|escapejs }}');
+            if (categoryLabels && categoryLabels.length > 0) {
+                var ctxCategory = document.getElementById('categoryChart');
+                if (ctxCategory) {
+                    var categoryChart = new Chart(ctxCategory.getContext('2d'), {
+                        type: 'pie',
+                        data: {
+                            labels: categoryLabels,
+                            datasets: [{
+                                data: categoryData,
+                                backgroundColor: [
+                                    '#007bff', '#28a745', '#dc3545', '#ffc107', '#17a2b8',
+                                    '#6610f2', '#fd7e14', '#20c997', '#e83e8c', '#6c757d'
+                                ]
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'right'
+                                }
+                            }
+                        }
+                    });
+                }
+            } else {
+                var categoryChartContainer = document.getElementById('categoryChart');
+                if (categoryChartContainer && categoryChartContainer.parentNode) {
+                    categoryChartContainer.parentNode.innerHTML = 
+                        '<div class="text-center py-5"><i class="fas fa-chart-pie fa-3x mb-3 text-muted"></i>' +
+                        '<p class="text-muted">Chart will appear when you create lessons with categories.</p></div>';
                 }
             }
-        }
-    });
-    
-    // Status Chart
-    const ctxStatus = document.getElementById('statusChart').getContext('2d');
-    const statusChart = new Chart(ctxStatus, {
-        type: 'doughnut',
-        data: {
-            labels: statusLabels,
-            datasets: [{
-                data: statusData,
-                backgroundColor: [
-                    '#ffc107', // New
-                    '#17a2b8', // Acknowledged
-                    '#007bff', // In Progress
-                    '#28a745', // Implemented
-                    '#6c757d'  // Archived
-                ]
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'right',
+            
+            // Initialize status chart
+            if (statusLabels && statusLabels.length > 0) {
+                var ctxStatus = document.getElementById('statusChart');
+                if (ctxStatus) {
+                    var statusChart = new Chart(ctxStatus.getContext('2d'), {
+                        type: 'doughnut',
+                        data: {
+                            labels: statusLabels,
+                            datasets: [{
+                                data: statusData,
+                                backgroundColor: [
+                                    '#ffc107', // New
+                                    '#17a2b8', // Acknowledged
+                                    '#007bff', // In Progress
+                                    '#28a745', // Implemented
+                                    '#6c757d'  // Archived
+                                ]
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'right'
+                                }
+                            }
+                        }
+                    });
+                }
+            } else {
+                var statusChartContainer = document.getElementById('statusChart');
+                if (statusChartContainer && statusChartContainer.parentNode) {
+                    statusChartContainer.parentNode.innerHTML = 
+                        '<div class="text-center py-5"><i class="fas fa-chart-bar fa-3x mb-3 text-muted"></i>' +
+                        '<p class="text-muted">Chart will appear when you create more lessons.</p></div>';
                 }
             }
+        } catch (error) {
+            console.error('Error initializing charts:', error);
         }
     });
 </script>
