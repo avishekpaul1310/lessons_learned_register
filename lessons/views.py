@@ -321,3 +321,24 @@ def dashboard(request):
     }
     
     return render(request, 'lessons/dashboard.html', context)
+
+@login_required
+def create_category(request):
+    """Create a new category via AJAX request"""
+    if request.method == 'POST':
+        category_name = request.POST.get('category_name', '').strip()
+        if category_name:
+            # Check if category already exists
+            existing = Category.objects.filter(name__iexact=category_name).first()
+            if existing:
+                return HttpResponse(f'{{"id": {existing.id}, "name": "{existing.name}", "status": "exists"}}', 
+                                    content_type='application/json')
+            
+            # Create new category
+            category = Category.objects.create(name=category_name)
+            return HttpResponse(f'{{"id": {category.id}, "name": "{category.name}", "status": "created"}}', 
+                                content_type='application/json')
+        
+        return HttpResponse('{"error": "Category name is required"}', status=400, content_type='application/json')
+    
+    return HttpResponse('{"error": "Method not allowed"}', status=405, content_type='application/json')

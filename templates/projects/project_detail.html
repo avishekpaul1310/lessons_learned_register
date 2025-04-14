@@ -89,7 +89,9 @@
                             {% for member in team_members %}
                             <div class="list-group-item">
                                 <div class="d-flex align-items-center">
-                                    <img src="{{ member.user.profile.image.url }}" class="rounded-circle me-2" width="40" height="40" alt="{{ member.user.username }}">
+                                    <div class="bg-light rounded-circle text-center me-2" style="width: 40px; height: 40px; line-height: 40px;">
+                                        <i class="fas fa-user text-secondary"></i>
+                                    </div>
                                     <div>
                                         <strong>{{ member.user.get_full_name|default:member.user.username }}</strong>
                                         <small class="d-block text-muted">{{ member.get_role_display }}</small>

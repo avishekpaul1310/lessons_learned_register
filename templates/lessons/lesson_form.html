@@ -35,7 +35,23 @@
                             {{ form.project|as_crispy_field }}
                         </div>
                         <div class="col-md-6">
-                            {{ form.category|as_crispy_field }}
+                            <div class="form-group">
+                                <label for="{{ form.category.id_for_label }}">Category</label>
+                                <div class="input-group">
+                                    {{ form.category }}
+                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newCategoryModal">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                                {% if form.category.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.category.errors }}
+                                    </div>
+                                {% endif %}
+                                {% if form.category.help_text %}
+                                    <small class="form-text text-muted">{{ form.category.help_text }}</small>
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
                     
@@ -102,6 +118,33 @@
         </form>
     </div>
 </div>
+
+<!-- New Category Modal -->
+<div class="modal fade" id="newCategoryModal" tabindex="-1" aria-labelledby="newCategoryModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="newCategoryModalLabel">Add New Category</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="newCategoryForm">
+          <div class="mb-3">
+            <label for="category_name" class="form-label">Category Name</label>
+            <input type="text" class="form-control" id="category_name" required>
+          </div>
+        </form>
+        <div id="categoryFeedback" class="d-none alert alert-success">
+          Category created successfully!
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="saveCategoryBtn">Save Category</button>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -115,5 +158,69 @@
             });
         });
     }
+    
+    // Handle new category creation
+    document.addEventListener('DOMContentLoaded', function() {
+        const saveCategoryBtn = document.getElementById('saveCategoryBtn');
+        const categoryFeedback = document.getElementById('categoryFeedback');
+        const categoryField = document.getElementById('{{ form.category.id_for_label }}');
+        
+        saveCategoryBtn.addEventListener('click', function() {
+            const categoryName = document.getElementById('category_name').value.trim();
+            if (!categoryName) {
+                alert('Please enter a category name');
+                return;
+            }
+            
+            // Create FormData object
+            const formData = new FormData();
+            formData.append('category_name', categoryName);
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+            
+            // Send AJAX request
+            fetch('{% url "category-create" %}', {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Handle success
+                categoryFeedback.textContent = data.status === 'created' ? 
+                    'Category created successfully!' : 'Category already exists.';
+                categoryFeedback.className = 'alert alert-success';
+                
+                // Add the new option to select field and select it
+                const option = new Option(data.name, data.id, true, true);
+                categoryField.add(option);
+                
+                // Show feedback and clear form
+                categoryFeedback.classList.remove('d-none');
+                document.getElementById('category_name').value = '';
+                
+                // Auto-close after 2 seconds
+                setTimeout(() => {
+                    const modalEl = document.getElementById('newCategoryModal');
+                    const modal = bootstrap.Modal.getInstance(modalEl);
+                    modal.hide();
+                    
+                    // Hide feedback after closing
+                    setTimeout(() => {
+                        categoryFeedback.classList.add('d-none');
+                    }, 500);
+                }, 1500);
+            })
+            .catch(error => {
+                categoryFeedback.textContent = 'Error creating category: ' + error.message;
+                categoryFeedback.className = 'alert alert-danger';
+                categoryFeedback.classList.remove('d-none');
+            });
+        });
+    });
 </script>
 {% endblock %}
