@@ -102,40 +102,9 @@ def lesson_create(request):
         form = LessonForm(request.POST, user=request.user)
         attachment_form = AttachmentForm(request.POST, request.FILES)
         
-        # Get raw data for validation
-        description_data = request.POST.get('description', '')
-        recommendation_data = request.POST.get('recommendations', '')
-        
-        # Detect empty content (either truly empty or just empty HTML tags)
-        empty_patterns = ['', '<p></p>', '<p>&nbsp;</p>', '&nbsp;']
-        description_is_empty = description_data.strip() in empty_patterns
-        recommendation_is_empty = recommendation_data.strip() in empty_patterns
-        
-        form_is_valid = True
-        
-        # Handle manual validation
-        if description_is_empty:
-            form.add_error('description', 'Description is required. Please provide content.')
-            form_is_valid = False
-        
-        if recommendation_is_empty:
-            form.add_error('recommendations', 'Recommendations are required. Please provide content.')
-            form_is_valid = False
-        
-        # Only save if form is valid and our custom validations pass
-        if form.is_valid() and form_is_valid:
-            # Create the lesson but don't save yet
+        if form.is_valid():
             lesson = form.save(commit=False)
             lesson.submitted_by = request.user
-            
-            # Force the correct values for required fields
-            if not description_is_empty:
-                lesson.description = description_data
-                
-            if not recommendation_is_empty:
-                lesson.recommendations = recommendation_data
-                
-            # Now save the lesson
             lesson.save()
             
             # Handle tagged users
@@ -180,39 +149,8 @@ def lesson_update(request, pk):
         form = LessonForm(request.POST, instance=lesson, user=request.user)
         attachment_form = AttachmentForm(request.POST, request.FILES)
         
-        # Get raw data for validation
-        description_data = request.POST.get('description', '')
-        recommendation_data = request.POST.get('recommendations', '')
-        
-        # Detect empty content (either truly empty or just empty HTML tags)
-        empty_patterns = ['', '<p></p>', '<p>&nbsp;</p>', '&nbsp;']
-        description_is_empty = description_data.strip() in empty_patterns
-        recommendation_is_empty = recommendation_data.strip() in empty_patterns
-        
-        form_is_valid = True
-        
-        # Handle manual validation
-        if description_is_empty:
-            form.add_error('description', 'Description is required. Please provide content.')
-            form_is_valid = False
-        
-        if recommendation_is_empty:
-            form.add_error('recommendations', 'Recommendations are required. Please provide content.')
-            form_is_valid = False
-        
-        # Only save if form is valid and our custom validations pass
-        if form.is_valid() and form_is_valid:
-            # Create the lesson but don't save yet
+        if form.is_valid():
             lesson = form.save(commit=False)
-            
-            # Force the correct values for required fields
-            if not description_is_empty:
-                lesson.description = description_data
-                
-            if not recommendation_is_empty:
-                lesson.recommendations = recommendation_data
-                
-            # Now save the lesson
             lesson.save()
             
             # Handle tagged users

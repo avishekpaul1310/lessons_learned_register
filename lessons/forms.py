@@ -3,7 +3,6 @@ from django.contrib.auth.models import User
 from django_summernote.widgets import SummernoteWidget
 from .models import Lesson, Attachment, Comment, Category
 from projects.models import Project
-import bleach
 
 class LessonForm(forms.ModelForm):
     tagged_users = forms.ModelMultipleChoiceField(
@@ -12,23 +11,24 @@ class LessonForm(forms.ModelForm):
         widget=forms.SelectMultiple(attrs={'class': 'form-control select2'})
     )
     
-    # Make rich text fields not required in the form (we'll handle validation in view)
-    description = forms.CharField(
-        required=False,  # Not required in form, we'll validate in the view
-        widget=SummernoteWidget(attrs={'summernote': {'height': '200px'}})
+    # Define unique field names for the rich text editors to avoid duplicate IDs
+    lesson_description = forms.CharField(
+        required=True,
+        widget=SummernoteWidget(attrs={'summernote': {'height': '200px'}}),
+        label="Description"
     )
     
-    recommendations = forms.CharField(
-        required=False,  # Not required in form, we'll validate in the view
-        widget=SummernoteWidget(attrs={'summernote': {'height': '200px'}})
+    lesson_recommendations = forms.CharField(
+        required=True,
+        widget=SummernoteWidget(attrs={'summernote': {'height': '200px'}}),
+        label="Recommendations"
     )
     
     class Meta:
         model = Lesson
         fields = [
             'project', 'title', 'category', 'date_identified', 
-            'description', 'recommendations', 'impact', 
-            'status', 'implementation_notes'
+            'impact', 'status', 'implementation_notes'
         ]
         widgets = {
             'date_identified': forms.DateInput(attrs={'type': 'date'}),
@@ -38,6 +38,11 @@ class LessonForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
+        
+        # If we have an instance, initialize the custom fields with instance data
+        if self.instance and self.instance.pk:
+            self.fields['lesson_description'].initial = self.instance.description
+            self.fields['lesson_recommendations'].initial = self.instance.recommendations
         
         # Limit projects to ones the user is part of
         if user:
@@ -61,21 +66,36 @@ class LessonForm(forms.ModelForm):
             except Project.DoesNotExist:
                 pass
     
-    def clean_description(self):
-        """Ensure description is not just empty HTML tags"""
-        description = self.cleaned_data.get('description', '')
-        # If description only contains HTML tags like <p></p> or whitespace, it's effectively empty
-        if description and (description.strip() == '<p></p>' or description.strip() == '<p>&nbsp;</p>'):
+    def clean_lesson_description(self):
+        """Validate description field"""
+        description = self.cleaned_data.get('lesson_description', '')
+        empty_patterns = ['', '<p></p>', '<p>&nbsp;</p>', '&nbsp;']
+        
+        if not description or description.strip() in empty_patterns:
             raise forms.ValidationError("Please provide a description.")
         return description
     
-    def clean_recommendations(self):
-        """Ensure recommendations is not just empty HTML tags"""
-        recommendations = self.cleaned_data.get('recommendations', '')
-        # If recommendations only contains empty HTML tags or whitespace, it's effectively empty
-        if recommendations and (recommendations.strip() == '<p></p>' or recommendations.strip() == '<p>&nbsp;</p>'):
+    def clean_lesson_recommendations(self):
+        """Validate recommendations field"""
+        recommendations = self.cleaned_data.get('lesson_recommendations', '')
+        empty_patterns = ['', '<p></p>', '<p>&nbsp;</p>', '&nbsp;']
+        
+        if not recommendations or recommendations.strip() in empty_patterns:
             raise forms.ValidationError("Please provide recommendations.")
         return recommendations
+    
+    def save(self, commit=True):
+        """Override save to handle the custom rich text fields"""
+        lesson = super().save(commit=False)
+        
+        # Set the model fields from our custom form fields
+        lesson.description = self.cleaned_data.get('lesson_description', '')
+        lesson.recommendations = self.cleaned_data.get('lesson_recommendations', '')
+        
+        if commit:
+            lesson.save()
+        
+        return lesson
 
 class AttachmentForm(forms.ModelForm):
     # Make file field optional for form display, but will validate in clean if submitted
