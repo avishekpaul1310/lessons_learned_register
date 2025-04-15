@@ -102,7 +102,22 @@ def lesson_create(request):
         form = LessonForm(request.POST, user=request.user)
         attachment_form = AttachmentForm(request.POST, request.FILES)
         
-        if form.is_valid():
+        # Get raw data for debugging
+        description_data = request.POST.get('description', '')
+        recommendation_data = request.POST.get('recommendations', '')
+        
+        # Check if description is empty or just HTML whitespace
+        description_is_empty = not description_data or description_data.strip() in ['<p></p>', '<p>&nbsp;</p>', '']
+        recommendation_is_empty = not recommendation_data or recommendation_data.strip() in ['<p></p>', '<p>&nbsp;</p>', '']
+        
+        # Handle the validation manually if needed
+        if description_is_empty:
+            form.add_error('description', 'Please provide a description.')
+        
+        if recommendation_is_empty:
+            form.add_error('recommendations', 'Please provide recommendations.')
+        
+        if form.is_valid() and not (description_is_empty or recommendation_is_empty):
             lesson = form.save(commit=False)
             lesson.submitted_by = request.user
             lesson.save()
@@ -149,7 +164,22 @@ def lesson_update(request, pk):
         form = LessonForm(request.POST, instance=lesson, user=request.user)
         attachment_form = AttachmentForm(request.POST, request.FILES)
         
-        if form.is_valid():
+        # Get raw data for validation
+        description_data = request.POST.get('description', '')
+        recommendation_data = request.POST.get('recommendations', '')
+        
+        # Check if description is empty or just HTML whitespace
+        description_is_empty = not description_data or description_data.strip() in ['<p></p>', '<p>&nbsp;</p>', '']
+        recommendation_is_empty = not recommendation_data or recommendation_data.strip() in ['<p></p>', '<p>&nbsp;</p>', '']
+        
+        # Handle the validation manually if needed
+        if description_is_empty:
+            form.add_error('description', 'Please provide a description.')
+        
+        if recommendation_is_empty:
+            form.add_error('recommendations', 'Please provide recommendations.')
+        
+        if form.is_valid() and not (description_is_empty or recommendation_is_empty):
             lesson = form.save()
             
             # Handle tagged users
