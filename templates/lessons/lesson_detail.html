@@ -84,7 +84,7 @@
                     {% for comment in comments %}
                     <div class="comment mb-3 p-3 {% if comment.author == user %}bg-light{% else %}bg-white{% endif %} border rounded">
                         <div class="d-flex align-items-center mb-2">
-                            <img src="{{ comment.author.profile.image.url }}" class="rounded-circle me-2" width="30" height="30" alt="{{ comment.author.username }}">
+                            <img src="{{ comment.author.profile.image.url }}" class="profile-img-sm me-2" alt="{{ comment.author.username }}">
                             <strong>{{ comment.author.get_full_name|default:comment.author.username }}</strong>
                             <small class="text-muted ms-auto">{{ comment.created_date }}</small>
                         </div>
@@ -116,7 +116,7 @@
             </div>
             <div class="card-body">
                 <div class="d-flex align-items-center mb-3">
-                    <img src="{{ lesson.submitted_by.profile.image.url }}" class="rounded-circle me-2" width="40" height="40" alt="{{ lesson.submitted_by.username }}">
+                    <img src="{{ lesson.submitted_by.profile.image.url }}" class="profile-img-md me-2" alt="{{ lesson.submitted_by.username }}">
                     <div>
                         <strong>{{ lesson.submitted_by.get_full_name|default:lesson.submitted_by.username }}</strong><br>
                         <small class="text-muted">{{ lesson.submitted_by.profile.job_title }}</small>
@@ -151,7 +151,7 @@
                 <div class="mb-3">
                     {% for user in lesson.tags.all %}
                     <div class="d-inline-block me-2 mb-2">
-                        <img src="{{ user.profile.image.url }}" class="rounded-circle" width="25" height="25" alt="{{ user.username }}"
+                        <img src="{{ user.profile.image.url }}" class="profile-img-xs" alt="{{ user.username }}"
                             data-bs-toggle="tooltip" title="{{ user.get_full_name|default:user.username }}">
                     </div>
                     {% endfor %}

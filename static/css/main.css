@@ -59,7 +59,7 @@ canvas {
     background-color: #f8f9fa !important;
 }
 
-/* Profile image */
+/* Profile images - enhanced styling for all sizes */
 .profile-img {
     width: 150px;
     height: 150px;
@@ -67,6 +67,40 @@ canvas {
     border-radius: 50%;
     border: 5px solid #fff;
     box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    background-color: #f0f4f8;
+}
+
+/* Medium profile images (40-60px) */
+.profile-img-md {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    background-color: #f0f4f8;
+}
+
+/* Small profile images (25-35px) */
+.profile-img-sm {
+    width: 30px;
+    height: 30px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 1px solid #fff;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    background-color: #f0f4f8;
+}
+
+/* Extra small profile images for tags (under 25px) */
+.profile-img-xs {
+    width: 25px;
+    height: 25px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 1px solid #fff;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    background-color: #f0f4f8;
 }
 
 /* Form styling */
