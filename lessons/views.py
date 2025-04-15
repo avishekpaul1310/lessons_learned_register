@@ -276,6 +276,9 @@ def export_lessons_pdf(queryset):
 def dashboard(request):
     user_projects = request.user.projects.all()
     
+    # Check if there are any lessons at all
+    total_lessons = Lesson.objects.filter(project__in=user_projects).count()
+    
     # Get latest lessons with optimized query
     latest_lessons = Lesson.objects.filter(project__in=user_projects).select_related(
         'project', 'category', 'submitted_by'
@@ -286,69 +289,70 @@ def dashboard(request):
         'project', 'category', 'submitted_by'
     ).all()
     
-    # Get lessons by category
-    categories = Category.objects.filter(lesson__project__in=user_projects).distinct()
+    # Initialize empty chart data
     lessons_by_category = {}
-    
-    category_counts = Lesson.objects.filter(
-        project__in=user_projects
-    ).values('category__name').annotate(count=Count('category')).order_by('-count')
-    
-    for item in category_counts:
-        category_name = item['category__name'] or 'Uncategorized'
-        lessons_by_category[category_name] = item['count']
-    
-    # Get lessons by status - more efficient query
-    status_counts = Lesson.objects.filter(
-        project__in=user_projects
-    ).values('status').annotate(count=Count('status')).order_by('status')
-    
     lessons_by_status = {}
+    category_json_labels = '[]'
+    category_json_data = '[]'
+    status_json_labels = '[]'
+    status_json_data = '[]'
+    high_impact_count = 0
+    new_lessons_count = 0
     
-    # Debugging: Print raw status counts
-    print("Status counts from database:", status_counts)
-    
-    for item in status_counts:
-        status_code = item['status']
-        status_display = dict(Lesson.STATUS_CHOICES).get(status_code, status_code)
+    # Only gather statistics if there are lessons
+    if total_lessons > 0:
+        # Get lessons by category
+        category_counts = Lesson.objects.filter(
+            project__in=user_projects
+        ).values('category__name').annotate(count=Count('category')).order_by('-count')
         
-        # Store with display name
-        lessons_by_status[status_display] = item['count']
+        for item in category_counts:
+            category_name = item['category__name'] or 'Uncategorized'
+            lessons_by_category[category_name] = item['count']
         
-        # Also store with a normalized key format suitable for template access
-        status_key = status_code.lower()
-        lessons_by_status[status_key] = item['count']
-    
-    # Debugging: Print final dictionary
-    print("Final lessons_by_status dictionary:", lessons_by_status)
-    
-    # Get high impact lessons count
-    high_impact_count = Lesson.objects.filter(
-        project__in=user_projects, 
-        impact='HIGH'
-    ).count()
-    
-    # Debugging: Get explicit count of NEW lessons
-    new_lessons_count = Lesson.objects.filter(
-        project__in=user_projects,
-        status='NEW'
-    ).count()
-    print(f"Direct count of NEW lessons: {new_lessons_count}")
-    
-    # Add this direct count to the context
-    lessons_by_status['new_count'] = new_lessons_count
-    
-    # Prepare JSON data for charts
-    import json
-    category_labels = list(lessons_by_category.keys())
-    category_data = list(lessons_by_category.values())
-    category_json_labels = json.dumps(category_labels)
-    category_json_data = json.dumps(category_data)
-    
-    status_labels = list(lessons_by_status.keys())
-    status_data = list(lessons_by_status.values())
-    status_json_labels = json.dumps(status_labels)
-    status_json_data = json.dumps(status_data)
+        # Get lessons by status
+        status_counts = Lesson.objects.filter(
+            project__in=user_projects
+        ).values('status').annotate(count=Count('status')).order_by('status')
+        
+        for item in status_counts:
+            status_code = item['status']
+            status_display = dict(Lesson.STATUS_CHOICES).get(status_code, status_code)
+            
+            # Store with display name
+            lessons_by_status[status_display] = item['count']
+            
+            # Also store with a normalized key format suitable for template access
+            status_key = status_code.lower()
+            lessons_by_status[status_key] = item['count']
+        
+        # Get high impact lessons count
+        high_impact_count = Lesson.objects.filter(
+            project__in=user_projects, 
+            impact='HIGH'
+        ).count()
+        
+        # Get explicit count of NEW lessons
+        new_lessons_count = Lesson.objects.filter(
+            project__in=user_projects,
+            status='NEW'
+        ).count()
+        
+        # Only add new_count if there are actually lessons
+        if new_lessons_count > 0:
+            lessons_by_status['new_count'] = new_lessons_count
+        
+        # Prepare JSON data for charts
+        import json
+        category_labels = list(lessons_by_category.keys())
+        category_data = list(lessons_by_category.values())
+        category_json_labels = json.dumps(category_labels)
+        category_json_data = json.dumps(category_data)
+        
+        status_labels = list(lessons_by_status.keys())
+        status_data = list(lessons_by_status.values())
+        status_json_labels = json.dumps(status_labels)
+        status_json_data = json.dumps(status_data)
     
     context = {
         'latest_lessons': latest_lessons,
@@ -359,10 +363,11 @@ def dashboard(request):
         'category_json_data': category_json_data,
         'status_json_labels': status_json_labels,
         'status_json_data': status_json_data,
-        'total_lessons': Lesson.objects.filter(project__in=user_projects).count(),
+        'total_lessons': total_lessons,
         'user_projects': user_projects,
         'high_impact_count': high_impact_count,
-        'new_lessons_count': new_lessons_count,  # Add direct count to context
+        'new_lessons_count': new_lessons_count,
+        'has_lessons': total_lessons > 0,
     }
     
     return render(request, 'lessons/dashboard.html', context)
