@@ -50,6 +50,22 @@ class LessonForm(forms.ModelForm):
                 self.fields['project'].initial = Project.objects.get(pk=project_id)
             except Project.DoesNotExist:
                 pass
+    
+    def clean_description(self):
+        """Ensure description is not just empty HTML tags"""
+        description = self.cleaned_data.get('description', '')
+        # If description only contains HTML tags like <p></p> or whitespace, it's effectively empty
+        if description and (description.strip() == '<p></p>' or description.strip() == '<p>&nbsp;</p>'):
+            raise forms.ValidationError("Please provide a description.")
+        return description
+    
+    def clean_recommendations(self):
+        """Ensure recommendations is not just empty HTML tags"""
+        recommendations = self.cleaned_data.get('recommendations', '')
+        # If recommendations only contains empty HTML tags or whitespace, it's effectively empty
+        if recommendations and (recommendations.strip() == '<p></p>' or recommendations.strip() == '<p>&nbsp;</p>'):
+            raise forms.ValidationError("Please provide recommendations.")
+        return recommendations
 
 class AttachmentForm(forms.ModelForm):
     # Make file field optional for form display, but will validate in clean if submitted
