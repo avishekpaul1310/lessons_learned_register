@@ -5,7 +5,7 @@ import os
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    image = models.ImageField(default='profile_pics/profile.jpg', upload_to='profile_pics')
+    image = models.ImageField(default='profile_pics/default.jpg', upload_to='profile_pics')
     job_title = models.CharField(max_length=100, blank=True)
     department = models.CharField(max_length=100, blank=True)
     
@@ -13,11 +13,14 @@ class Profile(models.Model):
         return f'{self.user.username} Profile'
     
     def save(self, *args, **kwargs):
+        # Check if this is a new profile without an image
+        is_new = self.pk is None
+        
         super().save(*args, **kwargs)
         
-        # Check if image file exists before attempting to resize
-        if self.image and hasattr(self.image, 'path') and os.path.exists(self.image.path):
-            try:
+        # Process the image for resizing/cropping
+        try:
+            if self.image and hasattr(self.image, 'path') and os.path.exists(self.image.path):
                 img = Image.open(self.image.path)
                 
                 # Ensure the image is a square by cropping to the center if necessary
@@ -40,10 +43,10 @@ class Profile(models.Model):
                     img.thumbnail(output_size)
                 
                 img.save(self.image.path)
-            except Exception as e:
-                # Log the error but don't crash
-                print(f"Error processing profile image: {e}")
-                pass
+        except Exception as e:
+            # Log the error but don't crash
+            print(f"Error processing profile image: {e}")
+            pass
 
 class AllowedEmailDomain(models.Model):
     """Model for storing domains that are allowed for registration"""
