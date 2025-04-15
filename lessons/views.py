@@ -300,16 +300,39 @@ def dashboard(request):
     ).values('status').annotate(count=Count('status')).order_by('status')
     
     lessons_by_status = {}
+    
+    # Debugging: Print raw status counts
+    print("Status counts from database:", status_counts)
+    
     for item in status_counts:
         status_code = item['status']
         status_display = dict(Lesson.STATUS_CHOICES).get(status_code, status_code)
+        
+        # Store with display name
         lessons_by_status[status_display] = item['count']
+        
+        # Also store with a normalized key format suitable for template access
+        status_key = status_code.lower()
+        lessons_by_status[status_key] = item['count']
+    
+    # Debugging: Print final dictionary
+    print("Final lessons_by_status dictionary:", lessons_by_status)
     
     # Get high impact lessons count
     high_impact_count = Lesson.objects.filter(
         project__in=user_projects, 
         impact='HIGH'
     ).count()
+    
+    # Debugging: Get explicit count of NEW lessons
+    new_lessons_count = Lesson.objects.filter(
+        project__in=user_projects,
+        status='NEW'
+    ).count()
+    print(f"Direct count of NEW lessons: {new_lessons_count}")
+    
+    # Add this direct count to the context
+    lessons_by_status['new_count'] = new_lessons_count
     
     # Prepare JSON data for charts
     import json
@@ -335,6 +358,7 @@ def dashboard(request):
         'total_lessons': Lesson.objects.filter(project__in=user_projects).count(),
         'user_projects': user_projects,
         'high_impact_count': high_impact_count,
+        'new_lessons_count': new_lessons_count,  # Add direct count to context
     }
     
     return render(request, 'lessons/dashboard.html', context)
