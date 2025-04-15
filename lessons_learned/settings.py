@@ -148,8 +148,13 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Authentication settings
+AUTH_USER_MODEL = 'auth.User'
 LOGIN_REDIRECT_URL = 'dashboard'
+LOGOUT_REDIRECT_URL = 'login'
 LOGIN_URL = 'login'
+
+# Email domain restrictions
+ALLOWED_EMAIL_DOMAINS = ['company.com', 'organization.org', 'gmail.com']  # Include gmail.com for testing
 
 # Email settings (for development)
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
