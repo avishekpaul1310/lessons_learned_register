@@ -253,8 +253,16 @@ document.addEventListener('DOMContentLoaded', function() {
         var statusLabels = JSON.parse(chartDataElement.getAttribute('data-status-labels') || '[]');
         var statusData = JSON.parse(chartDataElement.getAttribute('data-status-data') || '[]');
         
-        // Initialize category chart if we have data
-        if (categoryLabels && categoryLabels.length > 0) {
+        // Skip charts if no data is available
+        if (categoryLabels.length === 0 || categoryData.length === 0) {
+            var categoryChartContainer = document.getElementById('categoryChart');
+            if (categoryChartContainer && categoryChartContainer.parentNode) {
+                categoryChartContainer.parentNode.innerHTML = 
+                    '<div class="text-center py-5"><i class="fas fa-chart-pie fa-3x mb-3 text-muted"></i>' +
+                    '<p class="text-muted">Chart will appear when you create lessons with categories.</p></div>';
+            }
+        } else {
+            // Initialize category chart
             var ctxCategory = document.getElementById('categoryChart');
             if (ctxCategory) {
                 new Chart(ctxCategory.getContext('2d'), {
@@ -280,17 +288,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 });
             }
-        } else {
-            var categoryChartContainer = document.getElementById('categoryChart');
-            if (categoryChartContainer && categoryChartContainer.parentNode) {
-                categoryChartContainer.parentNode.innerHTML = 
-                    '<div class="text-center py-5"><i class="fas fa-chart-pie fa-3x mb-3 text-muted"></i>' +
-                    '<p class="text-muted">Chart will appear when you create lessons with categories.</p></div>';
-            }
         }
         
-        // Initialize status chart if we have data
-        if (statusLabels && statusLabels.length > 0) {
+        // Skip status chart if no data is available
+        if (statusLabels.length === 0 || statusData.length === 0) {
+            var statusChartContainer = document.getElementById('statusChart');
+            if (statusChartContainer && statusChartContainer.parentNode) {
+                statusChartContainer.parentNode.innerHTML = 
+                    '<div class="text-center py-5"><i class="fas fa-chart-bar fa-3x mb-3 text-muted"></i>' +
+                    '<p class="text-muted">Chart will appear when you create more lessons.</p></div>';
+            }
+        } else {
+            // Initialize status chart
             var ctxStatus = document.getElementById('statusChart');
             if (ctxStatus) {
                 new Chart(ctxStatus.getContext('2d'), {
@@ -318,13 +327,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     }
                 });
-            }
-        } else {
-            var statusChartContainer = document.getElementById('statusChart');
-            if (statusChartContainer && statusChartContainer.parentNode) {
-                statusChartContainer.parentNode.innerHTML = 
-                    '<div class="text-center py-5"><i class="fas fa-chart-bar fa-3x mb-3 text-muted"></i>' +
-                    '<p class="text-muted">Chart will appear when you create more lessons.</p></div>';
             }
         }
     } catch (error) {

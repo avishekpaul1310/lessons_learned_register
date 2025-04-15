@@ -5,7 +5,7 @@ import os
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    image = models.ImageField(default='default.jpg', upload_to='profile_pics')
+    image = models.ImageField(default='profile_pics/profile.jpg', upload_to='profile_pics')
     job_title = models.CharField(max_length=100, blank=True)
     department = models.CharField(max_length=100, blank=True)
     
@@ -19,13 +19,30 @@ class Profile(models.Model):
         if self.image and hasattr(self.image, 'path') and os.path.exists(self.image.path):
             try:
                 img = Image.open(self.image.path)
+                
+                # Ensure the image is a square by cropping to the center if necessary
+                if img.width != img.height:
+                    # Get the smaller dimension
+                    min_dimension = min(img.width, img.height)
+                    
+                    # Calculate cropping coordinates to center the image
+                    left = (img.width - min_dimension) // 2
+                    top = (img.height - min_dimension) // 2
+                    right = left + min_dimension
+                    bottom = top + min_dimension
+                    
+                    # Crop to square
+                    img = img.crop((left, top, right, bottom))
+                
+                # Resize to a standard profile size
                 if img.height > 300 or img.width > 300:
                     output_size = (300, 300)
                     img.thumbnail(output_size)
-                    img.save(self.image.path)
+                
+                img.save(self.image.path)
             except Exception as e:
                 # Log the error but don't crash
-                print(f"Error resizing profile image: {e}")
+                print(f"Error processing profile image: {e}")
                 pass
 
 class AllowedEmailDomain(models.Model):
