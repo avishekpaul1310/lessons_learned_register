@@ -105,6 +105,10 @@ def lesson_create(request):
         if form.is_valid():
             lesson = form.save(commit=False)
             lesson.submitted_by = request.user
+            
+            # Always set status to NEW for new lessons
+            lesson.status = 'NEW'
+            
             lesson.save()
             
             # Handle tagged users

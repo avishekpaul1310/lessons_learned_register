@@ -43,6 +43,10 @@ class LessonForm(forms.ModelForm):
         if self.instance and self.instance.pk:
             self.fields['lesson_description'].initial = self.instance.description
             self.fields['lesson_recommendations'].initial = self.instance.recommendations
+            # For existing lessons, keep their status
+        else:
+            # For new lessons, explicitly set the default status to NEW
+            self.initial['status'] = 'NEW'
         
         # Limit projects to ones the user is part of
         if user:
@@ -91,6 +95,10 @@ class LessonForm(forms.ModelForm):
         # Set the model fields from our custom form fields
         lesson.description = self.cleaned_data.get('lesson_description', '')
         lesson.recommendations = self.cleaned_data.get('lesson_recommendations', '')
+        
+        # For new lessons, make sure status is NEW if not otherwise specified
+        if not lesson.pk and not lesson.status:
+            lesson.status = 'NEW'
         
         if commit:
             lesson.save()
