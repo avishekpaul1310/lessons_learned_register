@@ -3,12 +3,24 @@ from django.contrib.auth.models import User
 from django_summernote.widgets import SummernoteWidget
 from .models import Lesson, Attachment, Comment, Category
 from projects.models import Project
+import bleach
 
 class LessonForm(forms.ModelForm):
     tagged_users = forms.ModelMultipleChoiceField(
         queryset=User.objects.all(),
         required=False,
         widget=forms.SelectMultiple(attrs={'class': 'form-control select2'})
+    )
+    
+    # Make rich text fields not required in the form (we'll handle validation in view)
+    description = forms.CharField(
+        required=False,  # Not required in form, we'll validate in the view
+        widget=SummernoteWidget(attrs={'summernote': {'height': '200px'}})
+    )
+    
+    recommendations = forms.CharField(
+        required=False,  # Not required in form, we'll validate in the view
+        widget=SummernoteWidget(attrs={'summernote': {'height': '200px'}})
     )
     
     class Meta:
@@ -20,8 +32,6 @@ class LessonForm(forms.ModelForm):
         ]
         widgets = {
             'date_identified': forms.DateInput(attrs={'type': 'date'}),
-            'description': SummernoteWidget(attrs={'summernote': {'height': '200px'}}),
-            'recommendations': SummernoteWidget(attrs={'summernote': {'height': '200px'}}),
             'implementation_notes': SummernoteWidget(attrs={'summernote': {'height': '150px'}}),
         }
     
